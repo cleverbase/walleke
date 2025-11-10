@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="nl" class="overflow-x-hidden">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/x-icon" href="../favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Headland+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/output.css">
+  <script src="../js/qrcode.min.js"></script>
+  <title>Portal | Gebruik gegevens</title>
+</head>
+<body class="overflow-x-hidden bg-brandBg text-textDark flex items-center justify-center min-h-screen px-8">
+  <div class="max-w-4xl w-full bg-cardBg rounded-2xl p-12 flex flex-col items-center gap-10">
+    <h1 id="qrTitle" class="font-headland text-3xl font-medium">Scan de QR-code</h1>
+    <p id="qrSubtitleTop" class="font-inter text-center max-w-xl">Laat de wallet deze code scannen om de gevraagde gegevens te delen.</p>
+    <div id="qrcode" class="p-4 bg-white flex justify-center items-center rounded-lg"
+         data-qrflow="presenter" data-wait="scanned" data-next-url="shared.html" data-size="220" data-color-dark="#333333" data-color-light="#FFFFFF" data-intent="use_card" data-kind="request"></div>
+    <div class="w-full max-w-md bg-white/60 rounded-lg p-4">
+      <label class="block font-inter text-sm mb-2" for="qrCodeText">Sessiecode (voor handmatig plakken in de wallet):</label>
+      <div class="flex gap-2">
+        <input id="qrCodeText" type="text" readonly class="flex-1 bg-white border border-gray-300 rounded-md px-3 py-2 font-inter text-sm" />
+        <button id="copyQrCode" class="bg-brandBlue hover:bg-brandBlueHover text-white rounded-md px-3 py-2 text-sm font-inter">Kopieer</button>
+      </div>
+      <p class="font-inter text-xs text-gray-700 mt-2">Plak de code in de wallet als alternatief voor scannen.</p>
+    </div>
+    <a href="index.html" class="font-inter text-sm text-brandBlue underline">Terug</a>
+  </div>
+
+  <script type="module" src="../js/qrflow-auto.js"></script>
+  <script>
+    const qrEl = document.getElementById('qrcode');
+    const input = document.getElementById('qrCodeText');
+    const copyBtn = document.getElementById('copyQrCode');
+    qrEl?.addEventListener('qrflow:session', (e) => {
+      const id = (qrEl.getAttribute('data-session-id') || (e.detail && e.detail.id) || '').toString();
+      if (input) input.value = id;
+    });
+    copyBtn?.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(input.value); copyBtn.textContent = 'Gekopieerd'; setTimeout(()=>copyBtn.textContent='Kopieer', 1200); } catch {}
+    });
+  </script>
+  <script type="module">
+    import { QrFlow } from '../js/qrflow.js';
+    const params = new URLSearchParams(location.search);
+    const type = (params.get('type') || 'INKOMEN').toUpperCase();
+    const portal = (params.get('portal') || '').toUpperCase();
+    const title = document.getElementById('qrTitle');
+    const map = { PID: 'PID', INKOMEN: 'Inkomensverklaring', NVM_LIDMAATSCHAP: 'NVM Lidmaatschap' };
+    if (title) title.textContent = `Scan de QR-code (gebruik ${map[type] || type})`;
+    const subTop = document.getElementById('qrSubtitleTop');
+    if (subTop) subTop.textContent = `Vraag aan de wallet om de ${map[type] || type} te delen.`;
+
+    const qrEl2 = document.getElementById('qrcode');
+    if (qrEl2) {
+      const portalPart = portal ? `&portal=${encodeURIComponent(portal)}` : '';
+      qrEl2.dataset.nextUrl = `shared.html?type=${encodeURIComponent(type)}${portalPart}`;
+    }
+
+    let f;
+    async function ensureFlow(){ if(!f) f = await QrFlow.init({ databaseURL: 'https://demoapp-6cc2a-default-rtdb.europe-west1.firebasedatabase.app/' }); }
+    let currentId = '';
+    async function applyRequestOnce(id){
+      if (!id) return;
+      await ensureFlow();
+      // Update nextUrl to include id as query param for robust navigation
+      try {
+        if (qrEl2) {
+          const portalPart = portal ? `&portal=${encodeURIComponent(portal)}` : '';
+          qrEl2.dataset.nextUrl = `shared.html?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}${portalPart}`;
+        }
+      } catch {}
+      // Persist both request payload and root markers including type for robust client detection
+      try { await f.setRequest(id, { intent: 'use_card', type, version: 1 }); } catch {}
+      try { await f.setSessionInfo(id, { intent: 'use_card', kind: 'request', type }); } catch {}
+      try { sessionStorage.setItem('qrId', id); } catch {}
+    }
+    qrEl2?.addEventListener('qrflow:session', async (e) => {
+      currentId = (qrEl2.getAttribute('data-session-id') || (e.detail && e.detail.id) || '').toString();
+      await applyRequestOnce(currentId);
+    });
+    // Fallback if event was missed: observe dataset change or use existing attribute
+    (async () => {
+      // Slight delay to allow presenter init
+      await new Promise(r=>setTimeout(r, 50));
+      let sid = (qrEl2?.getAttribute('data-session-id') || '').toString();
+      if (sid) { currentId = sid; await applyRequestOnce(currentId); return; }
+      const obs = new MutationObserver(async () => {
+        const idNow = (qrEl2?.getAttribute('data-session-id') || '').toString();
+        if (idNow) { currentId = idNow; await applyRequestOnce(currentId); try { obs.disconnect(); } catch {} }
+      });
+      try { qrEl2 && obs.observe(qrEl2, { attributes: true, attributeFilter: ['data-session-id'] }); } catch {}
+      setTimeout(()=>{ try { obs.disconnect(); } catch {} }, 3000);
+    })();
+  </script>
+</body>
+<!-- end -->
+</html>

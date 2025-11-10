@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="nl" class="overflow-x-hidden">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/x-icon" href="../favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Headland+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/output.css">
+  <script src="../js/qrcode.min.js"></script>
+  <title>Portal | QR</title>
+</head>
+
+<body class="overflow-x-hidden bg-brandBg text-textDark flex items-center justify-center min-h-screen px-8">
+  <div class="max-w-4xl w-full bg-cardBg rounded-2xl p-12 flex flex-col items-center gap-10">
+    <h1 id="qrTitle" class="font-headland text-3xl font-medium">Scan de QR-code</h1>
+    <div id="qrcode" class="p-4 bg-white flex justify-center items-center rounded-lg" data-qrflow="presenter" data-wait="completed" data-next-url="done.html" data-size="220" data-color-dark="#333333" data-color-light="#FFFFFF"></div>
+    <div class="w-full max-w-md bg-white/60 rounded-lg p-4">
+      <label class="block font-inter text-sm mb-2" for="qrCodeText">Sessiecode (voor handmatig plakken in de wallet):</label>
+      <div class="flex gap-2">
+        <input id="qrCodeText" type="text" readonly class="flex-1 bg-white border border-gray-300 rounded-md px-3 py-2 font-inter text-sm" />
+        <button id="copyQrCode" class="bg-brandBlue hover:bg-brandBlueHover text-white rounded-md px-3 py-2 text-sm font-inter">Kopieer</button>
+      </div>
+      <p id="qrSubtitle" class="font-inter text-xs text-gray-700 mt-2">Plak de code in de wallet om de gekozen gegevens zonder camera toe te voegen.</p>
+    </div>
+    <button id="togglePayload" class="font-inter text-sm text-brandBlue underline">Gegevens aanpassen</button>
+    <div id="payloadEditor" class="w-full max-w-md bg-white/60 rounded-lg p-4 hidden">
+      <h2 class="font-headland text-xl mb-2">Gegevens</h2>
+      <form id="payloadForm" class="grid grid-cols-1 gap-3"></form>
+      <p class="font-inter text-xs text-gray-600 mt-2">Pas de waarden aan; de QR levert deze gegevens aan de wallet.</p>
+    </div>
+    <a href="index.html" class="font-inter text-sm text-brandBlue underline">Terug</a>
+  </div>
+
+  <script type="module" src="../js/qrflow-auto.js"></script>
+  <script>
+    const qrEl = document.getElementById('qrcode');
+    const input = document.getElementById('qrCodeText');
+    const copyBtn = document.getElementById('copyQrCode');
+    qrEl?.addEventListener('qrflow:session', (e) => {
+      const id = (qrEl.getAttribute('data-session-id') || (e.detail && e.detail.id) || '').toString();
+      if (input) input.value = id;
+    });
+    copyBtn?.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(input.value); copyBtn.textContent = 'Gekopieerd'; setTimeout(() => copyBtn.textContent = 'Kopieer', 1200); } catch { }
+    });
+  </script>
+  <script type="module">
+    import { QrFlow } from '../js/qrflow.js';
+    const params = new URLSearchParams(location.search);
+    const normalizeType = (s) => (s == null ? '' : String(s)).trim().toUpperCase().replace(/[\s-]+/g, '_');
+    const typeRaw = params.get('type') || 'INKOMEN';
+    const type = normalizeType(typeRaw);
+    const defaultIssuerMap = { PID: 'Gemeente Rotterdam', INKOMEN: 'Belastingdienst', NVM_LIDMAATSCHAP: 'NVM' };
+    let issuer = defaultIssuerMap[type] || 'Onbekend';
+    const title = document.getElementById('qrTitle');
+    if (title) {
+      const map = { PID: 'PID', INKOMEN: 'Inkomensverklaring', NVM_LIDMAATSCHAP: 'NVM Lidmaatschap' };
+      title.textContent = `Scan de QR-code (${map[type] || type})`;
+    }
+    const qrEl2 = document.getElementById('qrcode');
+    if (qrEl2) {
+      qrEl2.dataset.nextUrl = `done.html?type=${encodeURIComponent(type)}`;
+    }
+
+    async function getTemplate(type, params) {
+      let templates = {};
+      try { templates = await (await fetch('./data/card-templates.json', { cache: 'no-cache' })).json(); } catch { }
+      let tpl = templates[type] || {};
+      if ((!tpl || Object.keys(tpl).length === 0) && type === 'NVM_LIDMAATSCHAP') {
+        // Be tolerant to space instead of underscore keys
+        tpl = templates['NVM LIDMAATSCHAP'] || {};
+      }
+      let payload = JSON.parse(JSON.stringify(tpl.payload || {}));
+      if (type === 'PID') {
+        const v = (params.get('variant') || '').toLowerCase();
+        if (v === 'minor' || params.get('minor') === '1') { payload.birth_date = '2010-05-01'; payload.age_over_18 = false; }
+        if (params.get('bsn')) payload.bsn = params.get('bsn');
+      } else if (type === 'INKOMEN') {
+        const year = params.get('year'); if (year) payload.nl_bld_bri_year = year;
+        const income = params.get('income'); if (income) payload.nl_bld_bri_income = Number(income);
+      }
+      return { issuer: tpl.issuer, payload };
+    }
+
+    function renderPayloadPreview(payload) {
+      const list = document.getElementById('payloadList');
+      if (!list) return;
+      list.innerHTML = '';
+      Object.entries(payload || {}).forEach(([k, v]) => {
+        const row = document.createElement('div');
+        const val = Array.isArray(v) ? v.join(', ') : (typeof v === 'object' ? JSON.stringify(v) : String(v));
+        row.innerHTML = `<strong>${k}</strong>: ${val}`;
+        list.appendChild(row);
+      });
+    }
+
+    let uiSchema = {};
+    try { uiSchema = await (await fetch('./data/card-ui.json', { cache: 'no-cache' })).json(); }
+    catch { }
+    if (!uiSchema || Object.keys(uiSchema).length === 0) {
+      try { uiSchema = await (await fetch('../mobile/data/card-ui.json', { cache: 'no-cache' })).json(); } catch { }
+    }
+    const tpl = await getTemplate(type, params);
+    const payload = tpl.payload || {};
+    issuer = tpl.issuer || issuer;
+    let schema = uiSchema[type] || uiSchema[type.replace(/_/g, ' ')] || null;
+    if (!schema) { schema = { order: Object.keys(payload || {}), labels: {}, format: {} }; }
+    const form = document.getElementById('payloadForm');
+    function renderForm() {
+      if (!form) return;
+      form.innerHTML = '';
+      const order = Array.isArray(schema.order) && schema.order.length ? schema.order : Object.keys(payload || {});
+      const labels = schema.labels || {};
+      const format = schema.format || {};
+      order.forEach((key) => {
+        const label = labels[key] || key;
+        const fmt = format[key] || '';
+        const wrap = document.createElement('div');
+        wrap.className = 'flex flex-col gap-1';
+        const lab = document.createElement('label');
+        lab.className = 'font-inter text-sm';
+        lab.textContent = label;
+        lab.setAttribute('for', 'fld_' + key);
+        let input;
+        if (fmt === 'boolean') {
+          input = document.createElement('input');
+          input.type = 'checkbox';
+          input.id = 'fld_' + key;
+          input.checked = !!payload[key];
+          input.addEventListener('change', () => { payload[key] = input.checked; pushMeta(); });
+        } else if (fmt === 'date') {
+          input = document.createElement('input');
+          input.type = 'date';
+          input.id = 'fld_' + key;
+          try { input.value = (payload[key] || '').slice(0, 10); } catch { input.value = ''; }
+          input.className = 'bg-white border border-gray-300 rounded-md px-3 py-2 font-inter text-sm';
+          input.addEventListener('input', () => { payload[key] = input.value; pushMetaDebounced(); });
+        } else if (fmt === 'eur') {
+          input = document.createElement('input');
+          input.type = 'number';
+          input.step = '1';
+          input.min = '0';
+          input.id = 'fld_' + key;
+          input.value = payload[key] ?? '';
+          input.className = 'bg-white border border-gray-300 rounded-md px-3 py-2 font-inter text-sm';
+          input.addEventListener('input', () => { const v = Number(input.value || '0'); payload[key] = isFinite(v) ? v : 0; pushMetaDebounced(); });
+        } else {
+          input = document.createElement('input');
+          input.type = 'text';
+          input.id = 'fld_' + key;
+          const val = Array.isArray(payload[key]) ? payload[key].join(', ') : (payload[key] ?? '');
+          input.value = val;
+          input.placeholder = label;
+          input.className = 'bg-white border border-gray-300 rounded-md px-3 py-2 font-inter text-sm';
+          input.addEventListener('input', () => {
+            const raw = input.value;
+            if (Array.isArray(payload[key])) {
+              payload[key] = raw.split(',').map(s => s.trim()).filter(s => s);
+            } else {
+              payload[key] = raw;
+            }
+            pushMetaDebounced();
+          });
+        }
+        wrap.appendChild(lab);
+        wrap.appendChild(input);
+        form.appendChild(wrap);
+      });
+    }
+    renderForm();
+    const payloadEditor = document.getElementById('payloadEditor');
+    const toggleBtn = document.getElementById('togglePayload');
+    function setOpen(open) {
+      if (!payloadEditor || !toggleBtn) return;
+      if (open) { payloadEditor.classList.remove('hidden'); toggleBtn.textContent = 'Verberg gegevens'; }
+      else { payloadEditor.classList.add('hidden'); toggleBtn.textContent = 'Gegevens aanpassen'; }
+    }
+    setOpen(false);
+    toggleBtn?.addEventListener('click', (e) => { e.preventDefault(); const isHidden = payloadEditor.classList.contains('hidden'); setOpen(isHidden); });
+    let f;
+    async function ensureFlow() { if (!f) f = await QrFlow.init({ databaseURL: 'https://demoapp-6cc2a-default-rtdb.europe-west1.firebasedatabase.app/' }); }
+    let currentId = '';
+    async function pushMeta() {
+      await ensureFlow(); if (!currentId) return;
+      try { await f.setMeta(currentId, { type, issuer, payload }); } catch { }
+    }
+    let tmr; const pushMetaDebounced = () => { clearTimeout(tmr); tmr = setTimeout(pushMeta, 300); };
+
+    async function applyOfferOnce(id) {
+      if (!id) return;
+      await ensureFlow();
+      currentId = id;
+      // Persist the offer and also root markers for robustness
+      try { await f.setOffer(id, { type, issuer, payload, version: 1 }); } catch {}
+      try { await f.setSessionInfo(id, { kind: 'offer', type }); } catch {}
+    }
+
+    // Primary: handle event
+    qrEl2?.addEventListener('qrflow:session', async (e) => {
+      const id = (qrEl2.getAttribute('data-session-id') || (e.detail && e.detail.id) || '').toString();
+      await applyOfferOnce(id);
+    });
+
+    // Fallback: handle pre-existing or later-assigned dataset attribute
+    (async () => {
+      await new Promise(r => setTimeout(r, 50));
+      let sid = (qrEl2?.getAttribute('data-session-id') || '').toString();
+      if (sid) { await applyOfferOnce(sid); return; }
+      const obs = new MutationObserver(async () => {
+        sid = (qrEl2?.getAttribute('data-session-id') || '').toString();
+        if (sid) { try { obs.disconnect(); } catch {} await applyOfferOnce(sid); }
+      });
+      try { qrEl2 && obs.observe(qrEl2, { attributes: true, attributeFilter: ['data-session-id'] }); } catch {}
+      setTimeout(() => { try { obs.disconnect(); } catch {} }, 3000);
+    })();
+  </script>
+
+</body>
+
+</html>

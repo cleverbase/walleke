@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="nl" class="overflow-x-hidden">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/x-icon" href="../favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Headland+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/output.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { inter: ['Inter', 'sans-serif'], headland: ['"Headland One"', 'serif'] },
+          colors: { brandBg: '#FAF5EB', textDark: '#222', cardBg: '#F7EFDD', brandBlue: '#163563', brandBlueHover: '#003d8c' }
+        }
+      }
+    };
+  </script>
+  <title>Portal | Gedeelde gegevens</title>
+</head>
+
+<body class="overflow-x-hidden bg-brandBg text-textDark flex items-center justify-center min-h-screen px-8">
+  <div class="max-w-3xl w-full bg-cardBg rounded-2xl p-10 flex flex-col items-center gap-6">
+    <h1 id="shareTitle" class="font-headland text-3xl font-medium">Gedeelde gegevens</h1>
+    <div id="shareContainer" class="w-full bg-white/70 rounded-xl p-6"></div>
+    <a href="index.html" class="bg-brandBlue hover:bg-brandBlueHover text-white rounded-md px-6 py-3 text-base font-inter inline-flex items-center gap-2 transition-colors duration-200">Terug</a>
+  </div>
+
+  <script type="module">
+    import { QrFlow } from '../js/qrflow.js';
+    const params = new URLSearchParams(location.search);
+    const typeParam = (params.get('type') || '').toUpperCase();
+    const portal = (params.get('portal') || '').toUpperCase();
+    const title = document.getElementById('shareTitle');
+    const backLink = document.querySelector('a[href="index.html"]');
+    const names = { PID: 'PID', INKOMEN: 'Inkomensverklaring', NVM_LIDMAATSCHAP: 'NVM Lidmaatschap' };
+    if (typeParam && title) {
+      if (portal === 'KADASTER') {
+        title.textContent = 'Inloggen bij Kadaster';
+      } else {
+        title.textContent = `${names[typeParam] || typeParam} gedeeld`;
+      }
+    }
+    async function loadJson(url) {
+      try { const res = await fetch(url, { cache: 'no-cache' }); if (!res.ok) throw new Error('http ' + res.status); return await res.json(); } catch { return null; }
+    }
+    const uiSchema = await loadJson('./data/card-ui.json') || {};
+    function formatDate(ts) { if (!ts) return ''; try { const d = new Date(ts); const dd = String(d.getDate()).padStart(2, '0'); const mm = String(d.getMonth() + 1).padStart(2, '0'); const yyyy = d.getFullYear(); return `${dd}-${mm}-${yyyy}`; } catch { return ''; } }
+    function formatCurrencyEUR(val) { const n = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^0-9.,-]/g, '').replace(',', '.')); if (!isFinite(n)) return ''; try { return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n); } catch { return `€ ${Math.round(n).toLocaleString('nl-NL')}`; } }
+    function renderDetailsFromSchema(type, payload) {
+      const schema = (uiSchema && (uiSchema[type] || uiSchema[String(type).replace(/_/g, ' ')])) || null;
+      const frag = document.createElement('div');
+      frag.className = 'grid grid-cols-1 gap-1 font-inter text-sm';
+      if (!schema) {
+        Object.entries(payload || {}).forEach(([k, v]) => {
+          const row = document.createElement('div');
+          row.innerHTML = `<strong>${k}</strong>: ${Array.isArray(v) ? v.join(', ') : (typeof v === 'object' ? JSON.stringify(v) : String(v))}`;
+          frag.appendChild(row);
+        });
+        return frag;
+      }
+      const order = schema.order || Object.keys(payload || {});
+      const labels = schema.labels || {};
+      const format = schema.format || {};
+      order.forEach((key) => {
+        const raw = payload ? payload[key] : undefined;
+        let val = raw;
+        const fmt = format[key];
+        if (fmt === 'date') {
+          if (typeof raw === 'string') { try { val = formatDate(Date.parse(raw)); } catch { val = raw; } }
+          else if (typeof raw === 'number') { val = formatDate(raw); }
+        } else if (fmt === 'boolean') {
+          val = raw ? 'ja' : 'nee';
+        } else if (fmt === 'eur') {
+          val = formatCurrencyEUR(raw);
+        } else if (Array.isArray(raw)) {
+          val = raw.join(', ');
+        } else if (typeof raw === 'object' && raw != null) {
+          val = JSON.stringify(raw);
+        }
+        const row = document.createElement('div');
+        row.innerHTML = `<strong>${labels[key] || key}</strong>: ${val ?? ''}`;
+        frag.appendChild(row);
+      });
+      return frag;
+    }
+    const container = document.getElementById('shareContainer');
+    const showWaiting = () => {
+      if (!container) return;
+      container.innerHTML = '<div class="font-inter text-base text-gray-800">Wachten op toestemming vanuit de wallet…</div>';
+    };
+    const f = await QrFlow.init({ databaseURL: 'https://demoapp-6cc2a-default-rtdb.europe-west1.firebasedatabase.app/' });
+    let id = (new URLSearchParams(location.search).get('id') || '').toString();
+    if (!id) { try { id = sessionStorage.getItem('qrId') || ''; } catch { } }
+    if (!id) {
+      container.textContent = 'Geen sessie gevonden.';
+    } else {
+      showWaiting();
+      let shared = null;
+      const start = Date.now();
+      while (!shared && (Date.now() - start) < 30000) {
+        try { shared = await f.getShared(id); } catch { }
+        if (shared) break;
+        await new Promise(r => setTimeout(r, 300));
+      }
+      if (!shared) {
+        container.innerHTML = '<div class="font-inter text-base text-gray-800">Er is geen toestemming ontvangen. Het verzoek is verlopen.</div>';
+      } else if ((shared && shared.outcome === 'not_found') || shared.error === 'not_found') {
+        const req = (shared.requestedType || '').toUpperCase();
+        const human = names[req] || req || 'gegevens';
+        const msg = document.createElement('div');
+        msg.className = 'font-inter text-base text-gray-800';
+        if (portal === 'KADASTER') {
+          if (title) title.textContent = 'Inloggen bij Kadaster';
+          msg.textContent = 'De wallet heeft geen NVM Lidmaatschap gevonden. Inloggen bij Kadaster is niet gelukt.';
+        } else {
+          msg.textContent = `De wallet heeft geen ${human} gevonden om te delen.`;
+        }
+        container.innerHTML = '';
+        container.appendChild(msg);
+      } else {
+        container.innerHTML = '';
+        if (portal === 'KADASTER') {
+          if (backLink) backLink.textContent = 'Verder';
+          if (title) title.textContent = 'Ingelogd bij Kadaster';
+          const payload = shared.payload || {};
+          const fullName = `${payload.given_name || ''} ${payload.family_name || ''}`.trim();
+          const member = payload.membership_number || '';
+          const wrap = document.createElement('div');
+          wrap.className = 'flex flex-col gap-2';
+          const msg = document.createElement('div');
+          msg.className = 'font-inter text-base text-gray-800';
+          msg.appendChild(document.createTextNode('Je bent ingelogd bij het Kadaster als '));
+          const strong = document.createElement('strong');
+          strong.textContent = fullName || 'onbekend';
+          msg.appendChild(strong);
+          msg.appendChild(document.createTextNode('.'));
+          const nr = document.createElement('div');
+          nr.className = 'font-inter text-base text-gray-800';
+          nr.innerHTML = `<strong>Lidmaatschapsnummer</strong>: ${member || '-'}`;
+          wrap.appendChild(msg);
+          wrap.appendChild(nr);
+          container.appendChild(wrap);
+        } else {
+          const head = document.createElement('div');
+          head.className = 'mb-3';
+          const name = names[(shared.type || '').toUpperCase()] || (shared.type || 'Gegevens');
+          head.innerHTML = `<div class="font-headland text-xl">${name}</div><div class="font-inter text-sm text-gray-700">Ontvangen</div>`;
+          container.appendChild(head);
+          container.appendChild(renderDetailsFromSchema((shared.type || '').toUpperCase(), shared.payload || {}));
+        }
+      }
+    }
+  </script>
+</body>
+
+</html>

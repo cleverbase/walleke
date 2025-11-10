@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="nl" class="overflow-x-hidden">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/x-icon" href="../favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Headland+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/output.css">
+  <script src="../js/html5-qrcode.min.js"></script>
+  <title>Mobiel | Wallet</title>
+</head>
+
+<body class="overflow-x-hidden bg-brandBg text-textDark min-h-screen">
+  <header class="w-full px-5 pt-6 pb-3 flex items-center justify-between">
+    <h1 id="appTitle" class="font-headland text-xl" title="Tip: klik 3x om te resetten">Wallet</h1>
+  </header>
+
+  <main class="px-5 pb-10">
+
+    <section data-view="scan" class="hidden">
+      <div class="flex flex-col items-center justify-start py-4">
+        <h2 class="font-headland text-xl font-medium">Scan de QR-code</h2>
+        <div class="mt-6 rounded-xl overflow-hidden relative" style="width: min(480px, 92vw); aspect-ratio: 1 / 1; background:#000;">
+          <div id="reader" class="absolute inset-0" data-qrflow="scanner" data-autostart="true" data-require-pin="true" data-next-url="#/done" data-switch-button="#switchCamera" data-manual-input="#manualCode" data-manual-button="#manualSubmit" data-manual-submit-on-enter="true"></div>
+          <div id="scanOverlay" class="absolute inset-0 bg-black/30 flex items-center justify-center hidden" style="pointer-events:none;">
+            <div class="flex items-center gap-2 text-white font-inter text-sm">
+              <span class="inline-block w-5 h-5 border-2 border-white/60 border-t-white rounded-full animate-spin"></span>
+              Verwerken…
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center justify-center mt-3">
+          <button id="switchCamera" class="font-inter text-sm text-brandBlue underline">Andere camera</button>
+        </div>
+        <div id="scanError" class="font-inter text-xs text-red-700 mt-2"></div>
+
+        <div class="w-full max-w-sm bg-cardBg rounded-xl p-4 mt-6">
+          <label for="manualCode" class="block font-inter text-sm mb-2">Of plak de code hier</label>
+          <div class="flex gap-2">
+            <input id="manualCode" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Plak of typ sessiecode" class="flex-1 bg-white border border-gray-300 rounded-md px-3 py-2 font-inter text-sm" />
+            <button id="manualSubmit" class="bg-brandBlue hover:bg-brandBlueHover text-white rounded-md px-4 py-2 text-sm font-inter">Gebruik code</button>
+          </div>
+          <p class="text-xs text-gray-600 mt-2 font-inter">Je kunt hiermee scannen overslaan.</p>
+        </div>
+
+        <a href="#/wallet" class="font-inter text-sm text-brandBlue underline self-center mt-4">Annuleren</a>
+      </div>
+
+
+    </section>
+
+    <section data-view="wallet" class="hidden">
+      <div class="max-w-md mx-auto">
+        <div id="cardsList" class="flex flex-col gap-3"></div>
+        <div class="mt-6 flex gap-3">
+          <a href="#/scan" class="bg-brandBlue hover:bg-brandBlueHover text-white rounded-md px-4 py-2 text-sm font-inter">Scan QR</a>
+        </div>
+      </div>
+    </section>
+
+    <section data-view="share" class="hidden">
+      <div class="flex items-center justify-center min-h-[50vh]">
+        <div class="max-w-md w-full bg-cardBg rounded-2xl p-6 flex flex-col gap-4">
+          <h2 class="font-headland text-2xl text-center font-medium">Gegevens delen</h2>
+          <div id="shareInfo" class="font-inter text-sm text-gray-800"></div>
+          <div id="shareChoices" class="mt-2 hidden"></div>
+          <div id="shareDetails" class="mt-2"></div>
+          <div id="shareError" class="font-inter text-sm text-red-700"></div>
+          <div class="mt-4 justify-center flex gap-3">
+            <button id="shareConfirm" class="px-4 py-2 rounded-md text-sm font-inter bg-brandBlue text-white hover:bg-brandBlueHover">Delen</button>
+            <a id="shareCancel" href="#/wallet" class="px-4 py-2 rounded-md text-sm font-inter bg-white border border-gray-300 text-textDark">Annuleren</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section data-view="done" class="hidden">
+      <div class="flex items-center justify-center min-h-[50vh]">
+        <div class="max-w-md w-full bg-cardBg rounded-2xl p-10 flex flex-col items-center gap-6">
+          <h2 id="doneTitle" class="font-headland text-2xl text-center font-medium">Gegevens toegevoegd</h2>
+          <div id="doneIcon" class="w-24 h-24">
+            <img src="../img/checkmark.svg" alt="Checkmark" class="w-full h-full object-contain" />
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="../js/qrflow-auto.js"></script>
+  <script type="module" src="../js/wallet-app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js', { scope: './' });
+    }
+  </script>
+  <div id="pinOverlay" class="fixed inset-0 bg-brandBg flex items-center justify-center px-6 hidden">
+    <div class="max-w-sm w-full bg-cardBg rounded-2xl p-8 flex flex-col items-center gap-6">
+      <h3 class="font-headland text-2xl font-medium">Bevestig met PIN</h3>
+      <div id="pinDots" class="flex gap-3 mt-2" aria-label="PIN-status">
+        <span class="w-3 h-3 rounded-full border border-textDark/40 inline-block"></span>
+        <span class="w-3 h-3 rounded-full border border-textDark/40 inline-block"></span>
+        <span class="w-3 h-3 rounded-full border border-textDark/40 inline-block"></span>
+        <span class="w-3 h-3 rounded-full border border-textDark/40 inline-block"></span>
+        <span class="w-3 h-3 rounded-full border border-textDark/40 inline-block"></span>
+      </div>
+      <div class="grid grid-cols-3 gap-4 mt-4 select-none">
+        <button data-digit="1" class="pin-key w-16 h-16 rounded-full bg-white border border-gray-200 flex items-center justify-center text-lg font-inter text-textDark active:scale-95 active:bg-brandBlue active:text-white transition select-none">1</button>
+        <button data-digit="2" class="pin-key w-16 h-16 rounded-full bg-white border border-gray-200 flex items-center justify-center text-lg font-inter text-textDark active:scale-95 active:bg-brandBlue active:text-white transition select-none">2</button>
+        <button data-digit="3" class="pin-key w-16 h-16 rounded-full bg-white border border-gray-200 flex items-center justify-center text-lg font-inter text-textDark active:scale-95 active:bg-brandBlue active:text-white transition select-none">3</button>
+        <button data-digit="4" class="pin-key w-16 h-16 rounded-full bg-white border border-gray-200 flex items-center justify-center text-lg font-inter text-textDark active:scale-95 active:bg-brandBlue active:text-white transition select-none">4</button>
+        <button data-digit="5" class="pin-key w-16 h-16 rounded-full bg-white border border-gray-200 flex items-center justify-center text-lg font-inter text-textDark active:scale-95 active:bg-brandBlue active:text-white transition select-none">5</button>
+        <button data-digit="6" class="pin-key w-16 h-16 rounded-full bg-white border border-gray-200 flex items-center justify-center text-lg font-inter text-textDark active:scale-95 active:bg-brandBlue active:text-white transition select-none">6</button>
+        <button data-digit="7" class="pin-key w-16 h-16 rounded-full bg-white border border-gray-200 flex items-center justify-center text-lg font-inter text-textDark active:scale-95 active:bg-brandBlue active:text-white transition select-none">7</button>
+        <button data-digit="8" class="pin-key w-16 h-16 rounded-full bg-white border border-gray-200 flex items-center justify-center text-lg font-inter text-textDark active:scale-95 active:bg-brandBlue active:text-white transition select-none">8</button>
+        <button data-digit="9" class="pin-key w-16 h-16 rounded-full bg-white border border-gray-200 flex items-center justify-center text-lg font-inter text-textDark active:scale-95 active:bg-brandBlue active:text-white transition select-none">9</button>
+        <div></div>
+        <button data-digit="0" class="pin-key w-16 h-16 rounded-full bg-white border border-gray-200 flex items-center justify-center text-lg font-inter text-textDark active:scale-95 active:bg-brandBlue active:text-white transition select-none">0</button>
+        <button id="pinBack" class="pin-key w-16 h-16 rounded-full bg-white border border-gray-200 flex items-center justify-center text-lg font-inter text-textDark active:scale-95 active:bg-brandBlue active:text-white transition select-none" aria-label="Verwijder laatste">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3.5 12l4.2 5.6c.4.5 1 .8 1.6.8H19a2 2 0 0 0 2-2V7.6a2 2 0 0 0-2-2H9.3c-.6 0-1.2.3-1.6.8L3.5 12z" stroke="#163563" stroke-width="1.5" />
+            <path d="M12 9l6 6M18 9l-6 6" stroke="#163563" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <a id="pinCancel" href="#/wallet" class="font-inter text-sm text-brandBlue underline mt-2">Annuleren</a>
+      <div id="pinError" class="text-red-700 font-inter text-sm min-h-[1.25rem] invisible">Onjuiste PIN. Probeer opnieuw.</div>
+    </div>
+  </div>
+</body>
+
+</html>

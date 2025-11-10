@@ -1,0 +1,25 @@
+{
+  "PID": {
+    "issuer": "Gemeente Den Haag",
+    "payload": {
+      "given_name": "Remco",
+      "family_name": "van Wijk",
+      "birth_date": "1980-06-24",
+      "age_over_18": true,
+      "nationality": ["NL"],
+      "bsn": "123456789"
+    }
+  },
+  "INKOMEN": {
+    "issuer": "Belastingdienst",
+    "payload": { "nl_bld_bri_year": "2024", "nl_bld_bri_income": 62000 }
+  },
+  "NVM LIDMAATSCHAP": {
+    "issuer": "NVM",
+    "payload": {
+      "given_name": "Remco",
+      "family_name": "van Wijk",
+      "membership_number": "NVM-123456"
+    }
+  }
+}

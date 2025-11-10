@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="nl" class="overflow-x-hidden">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/x-icon" href="../favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Headland+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/output.css">
+  <title>Portal | Kies gegeven</title>
+</head>
+
+<body class="overflow-x-hidden bg-brandBg text-textDark flex items-center justify-center min-h-screen px-8">
+  <div class="max-w-4xl w-full bg-cardBg rounded-2xl p-10 flex flex-col items-center gap-8">
+    <h1 class="font-headland text-3xl font-medium">Kies wat je wilt doen</h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+      <section class="bg-white/70 rounded-xl p-6 border border-gray-200 flex flex-col gap-4 h-full">
+        <h2 class="font-headland text-center text-xl">Toevoegen aan wallet</h2>
+        <p class="font-inter text-sm text-gray-800">Toon een QR op dit scherm en scan of plak de code in de wallet om het gekozen kaartje toe te voegen.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-auto">
+          <a href="qr.html?type=PID" class="bg-white border text-center hyphens-auto border-gray-300 text-textDark rounded-md px-6 py-3 text-base font-inter inline-flex items-center justify-center gap-2 transition-colors duration-200 hover:bg-brandBlue hover:text-white">PID</a>
+          <a href="qr.html?type=INKOMEN" class="bg-white border text-center hyphens-auto border-gray-300 text-textDark rounded-md px-6 py-3 text-base font-inter inline-flex items-center justify-center gap-2 transition-colors duration-200 hover:bg-brandBlue hover:text-white">Inkomensverklaring</a>
+          <a href="qr.html?type=NVM_LIDMAATSCHAP" class="bg-white border text-center hyphens-auto border-gray-300 text-textDark rounded-md px-6 py-3 text-base font-inter inline-flex items-center justify-center gap-2 transition-colors duration-200 hover:bg-brandBlue hover:text-white">NVM Lidmaatschap</a>
+        </div>
+      </section>
+      <section class="bg-white/70 rounded-xl p-6 border border-gray-200 flex flex-col gap-4 h-full">
+        <h2 class="font-headland text-center text-xl">Delen met portaal</h2>
+        <p class="font-inter text-sm text-gray-800">Toon een QR op dit scherm en gebruik je wallet om de gevraagde gegevens te delen. Je ziet vooraf welke gegevens je deelt.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-auto">
+          <a href="use.html?type=INKOMEN" class="bg-white border text-center hyphens-auto border-gray-300 text-textDark rounded-md px-6 py-3 text-base font-inter inline-flex items-center justify-center gap-2 transition-colors duration-200 hover:bg-brandBlue hover:text-white">Inkomensverklaring</a>
+          <a href="use.html?type=NVM_LIDMAATSCHAP" class="bg-white border text-center hyphens-auto border-gray-300 text-textDark rounded-md px-6 py-3 text-base font-inter inline-flex items-center justify-center gap-2 transition-colors duration-200 hover:bg-brandBlue hover:text-white">NVM Lidmaatschap</a>
+          <a href="use.html?type=NVM_LIDMAATSCHAP&portal=KADASTER" class="bg-white border text-center hyphens-auto border-gray-300 text-textDark rounded-md px-6 py-3 text-base font-inter inline-flex items-center justify-center gap-2 transition-colors duration-200 hover:bg-brandBlue hover:text-white">Kadaster</a>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+
+</html>
