@@ -19,9 +19,9 @@
     <div id="qrcode" class="p-4 bg-white flex justify-center items-center rounded-lg" data-qrflow="presenter" data-wait="completed" data-next-url="done.html" data-size="220" data-color-dark="#333333" data-color-light="#FFFFFF"></div>
     <div class="w-full max-w-md bg-white/60 rounded-lg p-4">
       <label class="block font-inter text-sm mb-2" for="qrCodeText">Sessiecode (voor handmatig plakken in de wallet):</label>
-      <div class="flex gap-2">
-        <input id="qrCodeText" type="text" readonly class="flex-1 bg-white border border-gray-300 rounded-md px-3 py-2 font-inter text-sm" />
-        <button id="copyQrCode" class="bg-brandBlue hover:bg-brandBlueHover text-white rounded-md px-3 py-2 text-sm font-inter">Kopieer</button>
+      <div class="flex flex-wrap gap-2">
+        <input id="qrCodeText" type="text" readonly class="flex-1 min-w-0 bg-white border border-gray-300 rounded-md px-3 py-2 font-inter text-sm" />
+        <button id="copyQrCode" class="shrink-0 bg-brandBlue hover:bg-brandBlueHover text-white rounded-md px-3 py-2 text-sm font-inter">Kopieer</button>
       </div>
       <p id="qrSubtitle" class="font-inter text-xs text-gray-700 mt-2">Plak de code in de wallet om de gekozen gegevens zonder camera toe te voegen.</p>
     </div>
