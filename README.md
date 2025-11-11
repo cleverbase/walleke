@@ -1,11 +1,9 @@
 **Overview**
-- This repository contains a small, static demo of a “Portal” and a mock “Wallet” that exchange data via short‑lived QR sessions.
-- Two flows exist:
-  - Add flow: the portal presents a QR with card data the wallet can accept.
-    - Pages: `portal/index.html` → `portal/add.html` → `portal/add-result.html`.
-  - Share flow: the portal requests data the wallet can share.
-    - Pages: `portal/index.html` → `portal/share.html` → `portal/share-result.html`.
-- Sessions are coordinated by a lightweight service wrapper in `js/qrflow*.js` and a demo Firebase Realtime Database.
+- Landing page: `index.html` uses the same visual language as portal/wallet and links to both experiences (desktop portal, mobile wallet) plus PWA install instructions.
+- Portal/wallet exchange data via short-lived QR sessions:
+  - Add flow: `portal/index.html` → `portal/add.html` → `portal/add-result.html`.
+  - Share flow: `portal/index.html` → `portal/share.html` → `portal/share-result.html`.
+- Sessions are coordinated by `js/qrflow*.js` talking to a demo Firebase Realtime Database.
 
 **How It Works**
 - The portal opens a QR “presenter” element that exposes a session ID to the wallet.
@@ -14,13 +12,14 @@
 - The wallet stores cards in `localStorage`, renders them using a simple UI schema, and can seed example cards.
 
 **Run Locally**
-- Serve the repository as static files (any HTTP server works):
+- Serve as static files (any HTTP server works):
   - Node: `npx serve .` or `npx http-server .`
   - Python: `python -m http.server 8080`
-- Open two browser windows:
+- Recommended tabs:
   - Portal: `portal/index.html`
   - Wallet: `mobile/index.html`
-- Use the “Sessiecode” field shown on portal pages to paste the session into the wallet if you don’t use a real camera.
+- Use the “Sessiecode” field on portal pages to copy/paste session IDs into the wallet when you aren’t scanning with a camera.
+- Root entry (`index.html`) is optional but useful when demoing the portal/mobile split or the PWA instructions.
 
 **Core Pages**
 - `portal/index.html` – entry; links to Add and Share scenarios.
@@ -52,9 +51,11 @@
 
   - `data/cards-seed.json`
     - Optional seed list the wallet can import.
-    - Entry variants:
-      - Reference: `{ "typeRef": "PID", "contentRef": "PID_REMCO" }` (copies issuer/payload/dates from `card-content.json`).
-      - Inline: `{ "type": "PID", "issuer": "X", "payload": { ... } }`.
+    - Contains named sets used by the wallet:
+      - `pid` – PID only (default first-run seed).
+      - `pid_inkomen` – PID + latest income statements.
+      - `pid_nvm` – PID + NVM membership.
+    - Entries can reference `card-content.json` via `{ "typeRef": "...", "contentRef": "..."] }` or provide inline payloads.
 
   - `data/use-scenarios.json`
     - Share flow scenarios driving `portal/share.html` and `portal/share-result.html`.
@@ -82,17 +83,21 @@
 - Missing paths render as empty strings (no errors).
 
 **Behavioral Details**
-- Inner header logic (`portal/share-result.html`):
-  - If `resultName*` is missing or renders to an empty string, the inner title is omitted.
-  - The inner subtitle is shown only when `resultSubtitle*` is present and non‑empty.
-  - The outer page title uses `resultTitle*` when provided.
-- Details rendering uses the type schema from `card-types.json`:
+- Share result headers (`portal/share-result.html`):
+  - If `resultName*` is empty the inner title is omitted.
+  - The inner subtitle only renders when `resultSubtitle*` evaluates to non-empty.
+  - The outer `<h1>` uses `resultTitle*` when provided.
+- Details rendering (`portal/share-result.html`, wallet cards) follows `card-types.json`:
   - `date` → `dd-mm-yyyy`, `boolean` → `ja`/`nee`, `eur` → localized Euro.
-  - Arrays join with comma, objects are JSON‑stringified.
+  - Arrays join with comma; objects are JSON-stringified.
 - Wallet behavior (`js/wallet-app.js`):
-  - Cards live in `localStorage` under a simple structure and use `card-types.json` for rendering.
-  - The seed prompt reads `data/cards-seed.json` and `data/card-content.json` to add example cards.
-  - The Share flow sends `{ outcome: 'ok'|'not_found', type, issuer, payload }` back to the portal.
+  - Cards live in `localStorage` and are rendered using the same UI schema.
+  - Seeding logic:
+    - On a fresh device only two buttons are shown: “Ja, vul met PID” and “Nee”.
+    - After seeding once (or after triple-click reset) additional options appear for `PID + INKOMEN` and `PID + NVM`.
+    - Triple-click the “Wallet” title to clear the wallet, reset the prompt, and scroll to the seed card.
+  - The seed prompt reads `data/cards-seed.json`/`data/card-content.json` for payloads.
+  - Share flow returns `{ outcome: 'ok'|'not_found', type, issuer, payload }` to the portal.
 
 **Session Transport**
 - The helper in `js/qrflow.js` uses a Firebase Realtime Database (demo instance) as a simple rendezvous point.
@@ -101,9 +106,13 @@
 
 **Extending The Demo**
 - Add a new type: extend `data/card-types.json` (title/order/labels/format).
-- Provide example content: add an entry to `data/card-content.json` and set `visible: true`.
-- Seed the wallet (optional): add items to `data/cards-seed.json`.
-- Create a new share scenario: add a key to `data/use-scenarios.json` with `request.typeRef` and result configuration.
+- Provide example content: add an entry to `data/card-content.json` (set `visible: true` to list it on the portal).
+- Seed the wallet: extend `data/cards-seed.json` (`pid`, `pid_inkomen`, `pid_nvm` or add your own set names).
+- Create a new share scenario: add to `data/use-scenarios.json` with `request.typeRef` and result configuration.
+
+**Landing Page (`index.html`)**
+- Mirrors the wallet/portal look & feel.
+- Highlights the two flows, triple-tap seeding tips, and mobile PWA install steps.
 
 **File Map**
 - Portal
