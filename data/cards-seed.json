@@ -1,8 +1,16 @@
 {
-  "version": 1,
-  "cards": [
-    { "typeRef": "PID", "contentRef": "PID_REMCO" },
-    { "typeRef": "INKOMEN", "contentRef": "INKOMEN_2024_REMCO" },
-    { "typeRef": "INKOMEN", "contentRef": "INKOMEN_2023_REMCO" }
-  ]
+  "sets": {
+    "pid": [
+      { "typeRef": "PID", "contentRef": "PID_REMCO" }
+    ],
+    "pid_inkomen": [
+      { "typeRef": "PID", "contentRef": "PID_REMCO" },
+      { "typeRef": "INKOMEN", "contentRef": "INKOMEN_2024_REMCO" },
+      { "typeRef": "INKOMEN", "contentRef": "INKOMEN_2023_REMCO" }
+    ],
+    "pid_nvm": [
+      { "typeRef": "PID", "contentRef": "PID_REMCO" },
+      { "typeRef": "NVM_LIDMAATSCHAP", "contentRef": "NVM_REMCO" }
+    ]
+  }
 }

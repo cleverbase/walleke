@@ -18,7 +18,18 @@ const stateKey = 'walletState';
 const settingsKey = 'walletSettings';
 function loadState() { try { return JSON.parse(localStorage.getItem(stateKey)) || { cards: [] }; } catch { return { cards: [] }; } }
 function saveState(s) { try { localStorage.setItem(stateKey, JSON.stringify(s)); } catch {} }
-function loadSettings() { try { return JSON.parse(localStorage.getItem(settingsKey)) || { hideSeedPrompt: false }; } catch { return { hideSeedPrompt: false }; } }
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(settingsKey);
+    if (!raw) return { hideSeedPrompt: false, advancedSeedOptions: false };
+    const parsed = JSON.parse(raw) || {};
+    if (typeof parsed.hideSeedPrompt !== 'boolean') parsed.hideSeedPrompt = false;
+    if (typeof parsed.advancedSeedOptions !== 'boolean') parsed.advancedSeedOptions = true;
+    return parsed;
+  } catch {
+    return { hideSeedPrompt: false, advancedSeedOptions: false };
+  }
+}
 function saveSettings(s) { try { localStorage.setItem(settingsKey, JSON.stringify(s)); } catch {} }
 
 let state = loadState();
@@ -52,6 +63,7 @@ function addCardFromSession(id, metaOverride) {
     payload: meta.payload,
   };
   state.cards.push(card);
+  if (settings.advancedSeedOptions === false) { settings.advancedSeedOptions = true; saveSettings(settings); }
   saveState(state);
   renderCards();
 }
@@ -206,7 +218,7 @@ function seedFromFile(path, setName) {
   });
 }
 
-function seedFromTemplates() { return seedFromFile('../data/cards-seed.json', '4'); }
+function seedFromTemplates() { return seedFromFile('../data/cards-seed.json', 'pid_inkomen'); }
 
 function renderCards() {
   const list = $('#cardsList');
@@ -215,28 +227,48 @@ function renderCards() {
   if (state.cards.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'bg-cardBg border border-dashed border-gray-300 rounded-xl p-6 text-center';
+    const showAdvancedSeeds = settings.advancedSeedOptions !== false;
     if (settings.hideSeedPrompt) {
       empty.innerHTML = `
         <p class="font-inter text-sm text-gray-700 mb-3">De wallet is leeg.</p>
         <p class="font-inter text-xs text-gray-600">Scan een QR om gegevens toe te voegen.</p>`;
-      list.appendChild(empty);
     } else {
       empty.innerHTML = `
         <p class="font-inter text-sm text-gray-700 mb-3">De wallet is leeg.</p>
-        <p class="font-inter text-sm text-gray-700 text-center">De wallet voorzien van gegevens?</p>
-        <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <button id="seedPidBtn" class="px-4 py-2 rounded-md text-sm font-inter bg-white border border-gray-300 text-textDark hover:bg-brandBlue hover:text-white">PID</button>
-          <button id="seedPidIncomeBtn" class="px-4 py-2 rounded-md text-sm font-inter bg-white border border-gray-300 text-textDark hover:bg-brandBlue hover:text-white">PID + INKOMEN</button>
-          <button id="seedPidNvmBtn" class="px-4 py-2 rounded-md text-sm font-inter bg-white border border-gray-300 text-textDark hover:bg-brandBlue hover:text-white">PID + NVM LIDMAATSCHAP</button>
+        <p class="font-inter text-xs text-gray-600">De wallet voorzien van gegevens?</p>
+        <div class="mt-4 flex flex-col items-center gap-3 w-full">
+          <div class="flex flex-wrap items-center justify-center gap-3 w-full">
+            <button id="seedPidBtn" class="px-4 py-2 rounded-md text-sm font-inter bg-brandBlue text-white hover:bg-brandBlueHover">Ja, vul met PID</button>
+            <button id="skipSeedBtn" class="px-4 py-2 rounded-md text-sm font-inter bg-white border border-gray-300 text-textDark">Nee</button>
+          </div>
+          ${showAdvancedSeeds ? `<div class="flex flex-wrap items-center justify-center gap-3 w-full">
+            <button id="seedPidIncomeBtn" class="px-4 py-2 rounded-md text-sm font-inter bg-brandBlue text-white hover:bg-brandBlueHover">PID + INKOMEN</button>
+            <button id="seedPidNvmBtn" class="px-4 py-2 rounded-md text-sm font-inter bg-brandBlue text-white hover:bg-brandBlueHover">PID + NVM LIDMAATSCHAP</button>
+          </div>` : ''}
         </div>
-        <p class="font-inter text-xs text-gray-600 mt-3 text-center">Je kunt ook altijd een QR scannen.</p>`;
-      list.appendChild(empty);
+        <p class="font-inter text-xs text-gray-600 mt-3">Je kunt ook altijd een QR scannen.</p>`;
+    }
+    list.appendChild(empty);
+    if (!settings.hideSeedPrompt) {
       const pid = empty.querySelector('#seedPidBtn');
-      const pidInc = empty.querySelector('#seedPidIncomeBtn');
-      const pidNvm = empty.querySelector('#seedPidNvmBtn');
-      pid?.addEventListener('click', (e) => { e.currentTarget.disabled = true; seedFromFile('../data/cards-seed.json', '3'); });
-      pidInc?.addEventListener('click', (e) => { e.currentTarget.disabled = true; seedFromFile('../data/cards-seed.json', '4'); });
-      pidNvm?.addEventListener('click', (e) => { e.currentTarget.disabled = true; seedFromFile('../data/cards-seed.json', 'pid_nvm'); });
+      const no = empty.querySelector('#skipSeedBtn');
+      const pidInc = showAdvancedSeeds ? empty.querySelector('#seedPidIncomeBtn') : null;
+      const pidNvm = showAdvancedSeeds ? empty.querySelector('#seedPidNvmBtn') : null;
+      const markAdvanced = () => {
+        if (settings.advancedSeedOptions === false) {
+          settings.advancedSeedOptions = true;
+          saveSettings(settings);
+        }
+      };
+      pid?.addEventListener('click', (e) => { e.currentTarget.disabled = true; markAdvanced(); seedFromFile('../data/cards-seed.json', 'pid'); });
+      pidInc?.addEventListener('click', (e) => { e.currentTarget.disabled = true; markAdvanced(); seedFromFile('../data/cards-seed.json', 'pid_inkomen'); });
+      pidNvm?.addEventListener('click', (e) => { e.currentTarget.disabled = true; markAdvanced(); seedFromFile('../data/cards-seed.json', 'pid_nvm'); });
+      no?.addEventListener('click', () => {
+        settings.hideSeedPrompt = true;
+        settings.advancedSeedOptions = true;
+        saveSettings(settings);
+        renderCards();
+      });
     }
     return;
   }
@@ -299,23 +331,6 @@ function renderCards() {
 
     list.appendChild(el);
   });
-}
-
-function showSeedMenu() {
-  try {
-    const ov = document.getElementById('seedOverlay');
-    if (!ov) return;
-    const btn3 = document.getElementById('seedSet3Btn');
-    const btn4 = document.getElementById('seedSet4Btn');
-    const btn5 = document.getElementById('seedSet5Btn');
-    const cancel = document.getElementById('seedCancel');
-    const hide = () => { try { ov.classList.add('hidden'); } catch {} };
-    if (btn3) btn3.onclick = (e) => { e?.preventDefault?.(); hide(); clearWallet(); seedFromFile('../data/cards-seed.json', '3'); };
-    if (btn4) btn4.onclick = (e) => { e?.preventDefault?.(); hide(); clearWallet(); seedFromFile('../data/cards-seed.json', '4'); };
-    if (btn5) btn5.onclick = (e) => { e?.preventDefault?.(); hide(); clearWallet(); seedFromFile('../data/cards-seed.json', 'pid_nvm'); };
-    if (cancel) cancel.onclick = (e) => { e?.preventDefault?.(); hide(); };
-    ov.classList.remove('hidden');
-  } catch {}
 }
 
 async function confirmWithPin(pinValue = '12345') {
@@ -739,11 +754,20 @@ window.addEventListener('DOMContentLoaded', () => {
     let clicks = 0; let timer = null;
     title.addEventListener('click', () => {
       clicks++;
-      if (timer) return;
-      timer = setTimeout(() => {
-        try { if (clicks === 3) showSeedMenu(); }
-        finally { clicks = 0; clearTimeout(timer); timer = null; }
-      }, 800);
+      if (!timer) {
+        timer = setTimeout(() => { clicks = 0; timer = null; }, 800);
+      }
+      if (clicks >= 3) {
+        clicks = 0;
+        clearTimeout(timer);
+        timer = null;
+        clearWallet();
+        settings.advancedSeedOptions = true;
+        settings.hideSeedPrompt = false;
+        saveSettings(settings);
+        renderCards();
+        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
+      }
     });
   }
 
@@ -767,6 +791,3 @@ function labelForType(t) {
   } catch {}
   try { return (t == null ? '' : String(t)).trim().toUpperCase() || s; } catch { return s; }
 }
-
-
-

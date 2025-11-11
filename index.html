@@ -6,67 +6,58 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <title>Walleke</title>
   <link href="https://fonts.googleapis.com/css2?family=Headland+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <script src="js/tailwind_3.4.17.js"></script>
-  <style>
-    :root { color-scheme: light; }
-  </style>
-  <meta name="description" content="Kies tussen Portal of Mobiel. Uitleg voor PWA-installatie en gebruik van de wallet.">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="css/output.css">
   <link rel="apple-touch-icon" href="img/icon-192.png">
   <link rel="manifest" href="mobile/manifest.json">
   <meta name="theme-color" content="#0A4D8C">
+  <meta name="description" content="Kies hier tussen het portaal en de wallet.">
 </head>
-<body class="overflow-x-hidden bg-[#F5F7FB] text-[#0F172A] min-h-screen">
+<body class="overflow-x-hidden bg-brandBg text-textDark min-h-screen flex flex-col">
+  <header class="w-full px-6 pt-8 pb-4 max-w-5xl mx-auto">
+    <!-- <h1 class="font-headland text-3xl">Walleke</h1>
+    <p class="font-inter text-sm text-gray-700 mt-1">Start met het portaal of met de mobiele wallet.</p> -->
+  </header>
 
-  <main class="px-6 pb-16 max-w-5xl mx-auto">
-    <section class="bg-white/90 border border-gray-200 rounded-2xl mt-8 p-6 md:p-8">
-      <h2 class="font-headland text-2xl md:text-3xl">Kies je startpunt</h2>
-      <p class="font-inter text-sm text-gray-700 mt-2">Gebruik het portaal op een computer of de wallet op je telefoon.</p>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        <a href="portal/index.html" class="group rounded-xl border border-gray-200 bg-white p-5 flex flex-col gap-3 hover:bg-[#0A4D8C] hover:text-white transition-colors">
+  <main class="flex-1 w-full px-6 pb-16 max-w-5xl mx-auto flex flex-col gap-8">
+    <section class="bg-cardBg border border-gray-300 rounded-2xl p-6 md:p-8">
+      <h2 class="font-headland text-2xl md:text-3xl text-center md:text-left">Kies je startpunt</h2>
+      <p class="font-inter text-sm text-gray-700 mt-2 text-center md:text-left">Gebruik het portaal op een pc en de wallet op je telefoon.</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
+        <a href="portal/index.html" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-3 transition hover:bg-brandBlue hover:text-white">
           <div class="flex items-center gap-3">
-            <img src="img/icon-192.png" alt="Portal" class="w-8 h-8">
-            <h3 class="font-headland text-xl">Portal</h3>
+            <img src="img/icon-192.png" alt="Portaal" class="w-9 h-9">
+            <h3 class="font-headland text-xl">Portaal</h3>
           </div>
-          <p class="font-inter text-sm leading-relaxed">
-            Gebruik het portaal om gegevens toe te voegen aan je wallet of om gegevens te delen met een scenario. 
-            Je vindt daar opties om kaarten/gegevens toe te voegen en te gebruiken.
+          <p class="font-inter text-sm">
+            Toon QR-codes om gegevens toe te voegen aan de wallet of start een scenario om gegevens te delen.
           </p>
         </a>
-
-        <a href="mobile/index.html" class="group rounded-xl border border-gray-200 bg-white p-5 flex flex-col gap-3 hover:bg-[#0A4D8C] hover:text-white transition-colors">
+        <a href="mobile/index.html" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-3 transition hover:bg-brandBlue hover:text-white">
           <div class="flex items-center gap-3">
-            <img src="img/icon-192.png" alt="Mobiel" class="w-8 h-8">
-            <h3 class="font-headland text-xl">Mobile</h3>
+            <img src="img/icon-192.png" alt="Mobiel" class="w-9 h-9">
+            <h3 class="font-headland text-xl">Wallet</h3>
           </div>
-          <p class="font-inter text-sm leading-relaxed">
-            Open de wallet op je telefoon om QR‑codes te scannen en gegevens te delen. 
-          </p>
-          <p class="font-inter text-xs italic leading-relaxed">
-          In de app: tik 3× op “Wallet” om een PID toe te voegen en volg de aanwijzingen. Je kunt ook een PID toevoegen door te scannen.
+          <p class="font-inter text-sm">
+            Scan of plak de sessiecode vanuit het portaal.</p>
+            <p class="font-inter text-xs italic">Tip: tik 3× op "Wallet" om snel voorbeeldgegevens te laden (PID, PID + inkomen, PID + NVM).</p>
           </p>
         </a>
-
       </div>
-      <p class="font-inter mt-2 text-xs italic text-gray-700">Dit kan ook allemaal op de pc; dan kun je het beste de sessiecodes knippen en plakken.</p>
+      <p class="font-inter mt-6 text-xs text-gray-700 text-center md:text-left">
+        Alles kan ook op één pc: open het portaal en de wallet in aparte browserschermen. Kopieer de sessiecodes uit het portaal en plak ze in de wallet.
+      </p>
     </section>
 
-    <section class="mt-8 grid grid-cols-1 md:grid-cols-1 gap-6">
-      <div class="bg-white/90 border border-gray-200 rounded-2xl p-6 md:p-8">
-        <h3 class="font-headland text-xl">Mobiele App (PWA) installeren</h3>
-        <ul class="font-inter text-sm text-gray-800 list-disc pl-5 mt-3 space-y-2">
-          <li>
-            Android (Chrome): open <a class="underline text-sky-600" href="./mobile">mobile</a>, tik op het menu (⋮), kies
-            “App installeren”. Open daarna de app zoals elke andere app.
-          </li>
-          <li>
-            iOS (Safari): open <a class="underline text-sky-600" href="./mobile">mobile</a>, tik op Deel‑icoon (vakje met pijl), kies
-            “Zet op beginscherm”. Open daarna het icoon vanaf je beginscherm.
-          </li>
-        </ul>
-      </div>
-
+    <section class="bg-cardBg border border-gray-300 rounded-2xl p-6 md:p-8">
+      <h3 class="font-headland text-xl">Mobiele PWA installeren</h3>
+      <ul class="font-inter text-sm text-gray-800 list-disc pl-5 mt-3 space-y-2">
+        <li>
+          <strong>Android (Chrome):</strong> open de wallet pagina op je telefoon en tik op ⋮ en kies "Toevoegen aan startscherm" en daarna "Installeren". Open daarna de app vanaf je startscherm of je apps.
+        </li>
+        <li>
+          <strong>iOS (Safari):</strong> open de wallet pagina op je telefoon en tik op "Deel" → "Zet op beginscherm".
+        </li>
+      </ul>
     </section>
   </main>
 
