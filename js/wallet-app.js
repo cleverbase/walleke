@@ -359,7 +359,7 @@ async function confirmWithPin(pinValue = '12345') {
       const hideOverlay = () => { try { overlay.classList.add('hidden'); overlay.style.display = 'none'; } catch {} };
 
       const cleanup = () => {
-        try { keys.forEach((k) => k.removeEventListener('click', onKey)); } catch {}
+        try { keys.forEach((k) => k.removeEventListener('pointerdown', onKey)); } catch {}
         try { backBtn && backBtn.removeEventListener('click', onBack); } catch {}
         try { cancelBtn && cancelBtn.removeEventListener('click', onCancel); } catch {}
         try { window.removeEventListener('keydown', onKeydown); } catch {}
@@ -380,6 +380,7 @@ async function confirmWithPin(pinValue = '12345') {
       };
 
       const onKey = (e) => {
+        e?.preventDefault?.();
         const t = e.currentTarget;
         if (!(t instanceof Element)) return;
         const d = t.getAttribute('data-digit');
@@ -407,7 +408,7 @@ async function confirmWithPin(pinValue = '12345') {
         }
       };
 
-      keys.forEach((k) => k.addEventListener('click', onKey));
+      keys.forEach((k) => k.addEventListener('pointerdown', onKey));
       backBtn && backBtn.addEventListener('click', onBack);
       cancelBtn && cancelBtn.addEventListener('click', onCancel);
       window.addEventListener('keydown', onKeydown, { once: false });
