@@ -147,11 +147,21 @@ function clearWallet() {
   renderCards();
 }
 
-function seedFromTemplates() {
-  loadJson('../data/cards-seed.json').then(async (seed) => {
+function seedFromFile(path, setName) {
+  loadJson(path).then(async (seed) => {
     const now = Date.now();
     const toTs = (v) => { if (!v) return undefined; if (typeof v === 'number') return v; const t = Date.parse(v); return isNaN(t) ? undefined : t; };
-    const list = Array.isArray(seed && seed.cards) ? seed.cards : [];
+    const list = (() => {
+      try {
+        if (seed && seed.sets && setName && Array.isArray(seed.sets[String(setName)])) {
+          return seed.sets[String(setName)];
+        }
+        if (seed && seed.sets && Array.isArray(seed.sets.default)) {
+          return seed.sets.default;
+        }
+      } catch {}
+      return Array.isArray(seed && seed.cards) ? seed.cards : [];
+    })();
     let content = null;
     const mapped = [];
     for (let i = 0; i < list.length; i++) {
@@ -196,6 +206,8 @@ function seedFromTemplates() {
   });
 }
 
+function seedFromTemplates() { return seedFromFile('../data/cards-seed.json', '4'); }
+
 function renderCards() {
   const list = $('#cardsList');
   if (!list) return;
@@ -211,17 +223,20 @@ function renderCards() {
     } else {
       empty.innerHTML = `
         <p class="font-inter text-sm text-gray-700 mb-3">De wallet is leeg.</p>
-        <p class="font-inter text-sm text-gray-700">Wil je de wallet voorzien van PID?</p>
-        <div class="mt-4 flex items-center justify-center gap-3">
-          <button id="seedWalletBtn" class="px-4 py-2 rounded-md text-sm font-inter bg-brandBlue text-white hover:bg-brandBlueHover">Ja, vul met PID</button>
-          <button id="skipSeedBtn" class="px-4 py-2 rounded-md text-sm font-inter bg-white border border-gray-300 text-textDark">Nee</button>
+        <p class="font-inter text-sm text-gray-700 text-center">De wallet voorzien van gegevens?</p>
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <button id="seedPidBtn" class="px-4 py-2 rounded-md text-sm font-inter bg-white border border-gray-300 text-textDark hover:bg-brandBlue hover:text-white">PID</button>
+          <button id="seedPidIncomeBtn" class="px-4 py-2 rounded-md text-sm font-inter bg-white border border-gray-300 text-textDark hover:bg-brandBlue hover:text-white">PID + INKOMEN</button>
+          <button id="seedPidNvmBtn" class="px-4 py-2 rounded-md text-sm font-inter bg-white border border-gray-300 text-textDark hover:bg-brandBlue hover:text-white">PID + NVM LIDMAATSCHAP</button>
         </div>
-        <p class="font-inter text-xs text-gray-600 mt-3">Je kunt ook altijd een QR scannen.</p>`;
+        <p class="font-inter text-xs text-gray-600 mt-3 text-center">Je kunt ook altijd een QR scannen.</p>`;
       list.appendChild(empty);
-      const yes = empty.querySelector('#seedWalletBtn');
-      const no = empty.querySelector('#skipSeedBtn');
-      yes?.addEventListener('click', (e) => { e.currentTarget.disabled = true; seedFromTemplates(); });
-      no?.addEventListener('click', () => { settings.hideSeedPrompt = true; saveSettings(settings); renderCards(); });
+      const pid = empty.querySelector('#seedPidBtn');
+      const pidInc = empty.querySelector('#seedPidIncomeBtn');
+      const pidNvm = empty.querySelector('#seedPidNvmBtn');
+      pid?.addEventListener('click', (e) => { e.currentTarget.disabled = true; seedFromFile('../data/cards-seed.json', '3'); });
+      pidInc?.addEventListener('click', (e) => { e.currentTarget.disabled = true; seedFromFile('../data/cards-seed.json', '4'); });
+      pidNvm?.addEventListener('click', (e) => { e.currentTarget.disabled = true; seedFromFile('../data/cards-seed.json', 'pid_nvm'); });
     }
     return;
   }
@@ -284,6 +299,23 @@ function renderCards() {
 
     list.appendChild(el);
   });
+}
+
+function showSeedMenu() {
+  try {
+    const ov = document.getElementById('seedOverlay');
+    if (!ov) return;
+    const btn3 = document.getElementById('seedSet3Btn');
+    const btn4 = document.getElementById('seedSet4Btn');
+    const btn5 = document.getElementById('seedSet5Btn');
+    const cancel = document.getElementById('seedCancel');
+    const hide = () => { try { ov.classList.add('hidden'); } catch {} };
+    if (btn3) btn3.onclick = (e) => { e?.preventDefault?.(); hide(); clearWallet(); seedFromFile('../data/cards-seed.json', '3'); };
+    if (btn4) btn4.onclick = (e) => { e?.preventDefault?.(); hide(); clearWallet(); seedFromFile('../data/cards-seed.json', '4'); };
+    if (btn5) btn5.onclick = (e) => { e?.preventDefault?.(); hide(); clearWallet(); seedFromFile('../data/cards-seed.json', 'pid_nvm'); };
+    if (cancel) cancel.onclick = (e) => { e?.preventDefault?.(); hide(); };
+    ov.classList.remove('hidden');
+  } catch {}
 }
 
 async function confirmWithPin(pinValue = '12345') {
@@ -707,8 +739,11 @@ window.addEventListener('DOMContentLoaded', () => {
     let clicks = 0; let timer = null;
     title.addEventListener('click', () => {
       clicks++;
-      if (!timer) { timer = setTimeout(() => { clicks = 0; timer = null; }, 800); }
-      if (clicks >= 3) { clicks = 0; clearTimeout(timer); timer = null; clearWallet(); }
+      if (timer) return;
+      timer = setTimeout(() => {
+        try { if (clicks === 3) showSeedMenu(); }
+        finally { clicks = 0; clearTimeout(timer); timer = null; }
+      }, 800);
     });
   }
 
