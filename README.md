@@ -1,0 +1,120 @@
+**Overview**
+- This repository contains a small, static demo of a “Portal” and a mock “Wallet” that exchange data via short‑lived QR sessions.
+- Two flows exist:
+  - Add flow: the portal presents a QR with card data the wallet can accept.
+    - Pages: `portal/index.html` → `portal/add.html` → `portal/add-result.html`.
+  - Share flow: the portal requests data the wallet can share.
+    - Pages: `portal/index.html` → `portal/share.html` → `portal/share-result.html`.
+- Sessions are coordinated by a lightweight service wrapper in `js/qrflow*.js` and a demo Firebase Realtime Database.
+
+**How It Works**
+- The portal opens a QR “presenter” element that exposes a session ID to the wallet.
+- The wallet scans (or pastes) the session code and writes back metadata and a response.
+- The portal polls the session until a response is present and then renders the outcome.
+- The wallet stores cards in `localStorage`, renders them using a simple UI schema, and can seed example cards.
+
+**Run Locally**
+- Serve the repository as static files (any HTTP server works):
+  - Node: `npx serve .` or `npx http-server .`
+  - Python: `python -m http.server 8080`
+- Open two browser windows:
+  - Portal: `portal/index.html`
+  - Wallet: `mobile/index.html`
+- Use the “Sessiecode” field shown on portal pages to paste the session into the wallet if you don’t use a real camera.
+
+**Core Pages**
+- `portal/index.html` – entry; links to Add and Share scenarios.
+- `portal/add.html` – shows a QR to add a card; includes a live payload editor.
+- `portal/add-result.html` – confirms the selected type was added.
+- `portal/share.html` – shows a QR requesting a scenario; wires `data/use-scenarios.json` into the request.
+- `portal/share-result.html` – renders the result of a share; title/subtitle and details depend on the scenario and card type.
+- `mobile/index.html` – mock wallet UI (add/share flows, local storage, seed prompt).
+
+**Data and Configuration**
+- Files in `data/` control s, examples, seeds, and use scenarios:
+
+  - `data/card-types.json`
+    - Per‑type UI schema used by portal and wallet to render details.
+    - Keys:
+      - `title` – human label for the type.
+      - `order` – ordered list of payload keys.
+      - `labels` – map of `payloadKey -> label`.
+      - `format` – map of `payloadKey -> format` (`date`, `boolean`, `eur`).
+
+  - `data/card-content.json`
+    - Reusable example cards for the Add flow and seeding.
+    - Keys per entry:
+      - `visible` (default true) – controls listing on `portal/index.html`.
+      - `type` – must exist in `card-types.json`.
+      - `issuer` – displayed below the card title.
+      - `payload` – object rendered using the type schema.
+      - `issuedAt` / `expiresAt` (optional) – ISO string or epoch ms.
+
+  - `data/cards-seed.json`
+    - Optional seed list the wallet can import.
+    - Entry variants:
+      - Reference: `{ "typeRef": "PID", "contentRef": "PID_REMCO" }` (copies issuer/payload/dates from `card-content.json`).
+      - Inline: `{ "type": "PID", "issuer": "X", "payload": { ... } }`.
+
+  - `data/use-scenarios.json`
+    - Share flow scenarios driving `portal/share.html` and `portal/share-result.html`.
+    - Common fields per scenario ID (uppercase recommended):
+      - `visible` – hide from scenario list when false.
+      - `title`, `subtitle`, `logo` – branding on `share.html`.
+      - `request` – what to ask the wallet for:
+        - `typeRef` (preferred) or `type` – matches a key from `card-types.json`.
+        - `contentRef` (optional) – derive type from an entry in `card-content.json`.
+      - Result header on `share-result.html`:
+        - `resultTitle` | `resultTitleTemplate` – outer page title (`<h1>`).
+        - `resultName` | `resultNameTemplate` – inner panel heading; if missing/empty, no inner title is shown.
+        - `resultSubtitle` | `resultSubtitleTemplate` – inner subtitle; shown only when non‑empty.
+        - `resultShowTitle`, `resultShowSubtitle` – extra switches to hide inner title/subtitle.
+      - Content area:
+        - `resultTemplate` – free text block (templated) above the details list.
+        - `showDetails` – hide or show the detail rows (default true).
+
+**Templating**
+- Several fields accept templates with `{{ ... }}` placeholders.
+- Context keys available in templates on `share-result.html`:
+  - `payload` – attributes of the shared card, e.g. `{{payload.given_name}}`.
+  - `shared` – raw response (includes `type`, `issuer`, etc.).
+  - `scenario` – the active scenario configuration.
+- Missing paths render as empty strings (no errors).
+
+**Behavioral Details**
+- Inner header logic (`portal/share-result.html`):
+  - If `resultName*` is missing or renders to an empty string, the inner title is omitted.
+  - The inner subtitle is shown only when `resultSubtitle*` is present and non‑empty.
+  - The outer page title uses `resultTitle*` when provided.
+- Details rendering uses the type schema from `card-types.json`:
+  - `date` → `dd-mm-yyyy`, `boolean` → `ja`/`nee`, `eur` → localized Euro.
+  - Arrays join with comma, objects are JSON‑stringified.
+- Wallet behavior (`js/wallet-app.js`):
+  - Cards live in `localStorage` under a simple structure and use `card-types.json` for rendering.
+  - The seed prompt reads `data/cards-seed.json` and `data/card-content.json` to add example cards.
+  - The Share flow sends `{ outcome: 'ok'|'not_found', type, issuer, payload }` back to the portal.
+
+**Session Transport**
+- The helper in `js/qrflow.js` uses a Firebase Realtime Database (demo instance) as a simple rendezvous point.
+- Database URL is configured inline in the portal and wallet scripts (search for `databaseURL` in the code).
+- For production, host your own backend and secure transport; the current setup is purely for demo purposes.
+
+**Extending The Demo**
+- Add a new type: extend `data/card-types.json` (title/order/labels/format).
+- Provide example content: add an entry to `data/card-content.json` and set `visible: true`.
+- Seed the wallet (optional): add items to `data/cards-seed.json`.
+- Create a new share scenario: add a key to `data/use-scenarios.json` with `request.typeRef` and result configuration.
+
+**File Map**
+- Portal
+  - `portal/index.html`, `portal/add.html`, `portal/add-result.html`, `portal/share.html`, `portal/share-result.html`
+- Wallet
+  - `mobile/index.html`, `mobile/manifest.json`, `mobile/sw.js`, `js/wallet-app.js`
+- Flow/infra
+  - `js/qrflow.js`, `js/qrflow-auto.js`, `js/qrcode.min.js`, `js/html5-qrcode.min.js`
+- Data
+  - `data/card-types.json`, `data/card-content.json`, `data/cards-seed.json`, `data/use-scenarios.json`
+
+**Notes**
+- The demo is intentionally minimal and static; no build step is required.
+- Styling is Tailwind‑based (`css/output.css`); visual customization can be added later.

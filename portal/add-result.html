@@ -8,7 +8,7 @@
   <link rel="icon" type="image/x-icon" href="../favicon.ico">
   <link href="https://fonts.googleapis.com/css2?family=Headland+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/output.css">
-  <title>Portal | Klaar</title>
+  <title>Portal | Toevoegen voltooid</title>
 </head>
 <body class="overflow-x-hidden bg-brandBg text-textDark flex items-center justify-center min-h-screen px-8">
   <div class="max-w-3xl w-full bg-cardBg rounded-2xl p-12 flex flex-col items-center gap-6">
@@ -21,16 +21,22 @@
   </div>
 
   <script>
-    (function(){
-      const m = { PID: 'PID', INKOMEN: 'Inkomensverklaring', NVM_LIDMAATSCHAP: 'NVM Lidmaatschap' };
+    (async function(){
       const type = (new URLSearchParams(location.search).get('type') || '').toUpperCase();
       const title = document.getElementById('doneTitle');
       const text = document.getElementById('doneText');
-      if (type && m[type]) {
-        title.textContent = `${m[type]} toegevoegd`;
-        text.textContent = `De ${m[type]} is succesvol toegevoegd aan de wallet.`;
+      async function loadJson(u){ try { const r = await fetch(u,{cache:'no-cache'}); if(!r.ok) throw new Error(); return await r.json(); } catch { return null; } }
+      const ui = await loadJson('../data/card-types.json') || {};
+      const titleFor = (t) => { const k = String(t||'').toUpperCase(); const s = ui[k] || ui[String(k).replace(/_/g,' ')]; return (s && s.title) ? s.title : k; };
+      const human = titleFor(type);
+      if (type && human && title && text) {
+        title.textContent = `${human} toegevoegd`;
+        text.textContent = `De ${human} is succesvol toegevoegd aan de wallet.`;
       }
     })();
   </script>
 </body>
 </html>
+
+
+

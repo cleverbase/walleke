@@ -15,27 +15,89 @@
 <body class="overflow-x-hidden bg-brandBg text-textDark flex items-center justify-center min-h-screen px-8">
   <div class="max-w-4xl w-full bg-cardBg rounded-2xl p-10 flex flex-col items-center gap-8">
     <h1 class="font-headland text-3xl font-medium">Kies wat je wilt doen</h1>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full items-stretch">
       <section class="bg-white/70 rounded-xl p-6 border border-gray-200 flex flex-col gap-4 h-full">
         <h2 class="font-headland text-center text-xl">Toevoegen aan wallet</h2>
-        <p class="font-inter text-sm text-gray-800">Toon een QR op dit scherm en scan of plak de code in de wallet om het gekozen kaartje toe te voegen.</p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-auto">
-          <a href="qr.html?type=PID" class="bg-white border text-center hyphens-auto border-gray-300 text-textDark rounded-md px-6 py-3 text-base font-inter inline-flex items-center justify-center gap-2 transition-colors duration-200 hover:bg-brandBlue hover:text-white">PID</a>
-          <a href="qr.html?type=INKOMEN" class="bg-white border text-center hyphens-auto border-gray-300 text-textDark rounded-md px-6 py-3 text-base font-inter inline-flex items-center justify-center gap-2 transition-colors duration-200 hover:bg-brandBlue hover:text-white">Inkomensverklaring</a>
-          <a href="qr.html?type=NVM_LIDMAATSCHAP" class="bg-white border text-center hyphens-auto border-gray-300 text-textDark rounded-md px-6 py-3 text-base font-inter inline-flex items-center justify-center gap-2 transition-colors duration-200 hover:bg-brandBlue hover:text-white">NVM Lidmaatschap</a>
-        </div>
+        <p class="font-inter text-sm text-gray-800 mb-2">Toon een QR op dit scherm en scan of plak de code in de wallet om de gekozen gegevens toe te voegen.</p>
+        <div id="addLinks" class="flex flex-col gap-3 mt-2"></div>
       </section>
       <section class="bg-white/70 rounded-xl p-6 border border-gray-200 flex flex-col gap-4 h-full">
         <h2 class="font-headland text-center text-xl">Delen met portaal</h2>
-        <p class="font-inter text-sm text-gray-800">Toon een QR op dit scherm en gebruik je wallet om de gevraagde gegevens te delen. Je ziet vooraf welke gegevens je deelt.</p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-auto">
-          <a href="use.html?type=INKOMEN" class="bg-white border text-center hyphens-auto border-gray-300 text-textDark rounded-md px-6 py-3 text-base font-inter inline-flex items-center justify-center gap-2 transition-colors duration-200 hover:bg-brandBlue hover:text-white">Inkomensverklaring</a>
-          <a href="use.html?type=NVM_LIDMAATSCHAP" class="bg-white border text-center hyphens-auto border-gray-300 text-textDark rounded-md px-6 py-3 text-base font-inter inline-flex items-center justify-center gap-2 transition-colors duration-200 hover:bg-brandBlue hover:text-white">NVM Lidmaatschap</a>
-          <a href="use.html?type=NVM_LIDMAATSCHAP&portal=KADASTER" class="bg-white border text-center hyphens-auto border-gray-300 text-textDark rounded-md px-6 py-3 text-base font-inter inline-flex items-center justify-center gap-2 transition-colors duration-200 hover:bg-brandBlue hover:text-white">Kadaster</a>
-        </div>
+        <p class="font-inter text-sm text-gray-800 mb-2">Toon een QR op dit scherm en gebruik je wallet om de gevraagde gegevens te delen. Je ziet vooraf welke gegevens je deelt.</p>
+        <div id="useLinks" class="flex flex-col gap-3 mt-2"></div>
       </section>
     </div>
   </div>
+  <script>
+    (async function(){
+      async function loadJson(url){ try { const r = await fetch(url, { cache: 'no-cache' }); if(!r.ok) throw new Error('http '+r.status); return await r.json(); } catch { return null; } }
+      const content = await loadJson('../data/card-content.json') || {};
+      const types = await loadJson('../data/card-types.json') || {};
+      const scenarios = await loadJson('../data/use-scenarios.json') || {};
+      const schemaFor = (t) => {
+        const k = String(t||'').toUpperCase();
+        const variants = [k, k.replace(/_/g,' '), k.replace(/[\s-]+/g,'_')];
+        for (const v of variants) { if (types[v]) return types[v]; }
+        const found = Object.keys(types||{}).find(key => String(key).toUpperCase() === k);
+        return found ? types[found] : null;
+      };
+      const titleFor = (t) => { const s = schemaFor(t); const k = String(t||'').toUpperCase(); return (s && s.title) ? s.title : k; };
+      // Add-to-wallet: use keys from templates (because they include example payload + issuer)
+      const addContentRefs = Object.keys(content);
+      const addLinks = document.getElementById('addLinks');
+      if (addLinks) {
+        addLinks.innerHTML='';
+        addContentRefs.forEach((ref) => {
+          const item = (content && content[ref]) || {};
+          if (item && item.visible === false) return; // hide drafts
+          const a = document.createElement('a');
+          a.href = `add.html?type=${encodeURIComponent(item && item.type || "")}&content=${encodeURIComponent(ref)}`;
+          a.className = 'bg-white border text-center hyphens-auto border-gray-300 text-textDark rounded-md px-6 py-3 text-base font-inter inline-flex items-center justify-center gap-2 transition-colors duration-200 hover:bg-brandBlue hover:text-white';
+          a.textContent = titleFor(item && item.type || "");
+          addLinks.appendChild(a);
+        });
+      }
+      // Use/share: scenarios first, then generic by type
+      const useLinks = document.getElementById('useLinks');
+      if (useLinks) {
+        useLinks.innerHTML='';
+        const scKeys = Object.keys(scenarios || {});
+        if (scKeys.length === 0) {
+          const msg = document.createElement('p');
+          msg.className = 'col-span-full font-inter text-sm text-gray-700 text-center';
+          msg.textContent = 'Geen gebruiksscenario\'s geconfigureerd.';
+          useLinks.appendChild(msg);
+        } else {
+          scKeys.forEach((id) => {
+            const s = scenarios[id] || {};
+            if (s && s.visible === false) return; // hide drafts
+            const a = document.createElement('a');
+            a.href = `share.html?scenario=${encodeURIComponent(id)}`;
+            // Match generic card style (hover, border, colors)
+            a.className = 'bg-white border text-center hyphens-none break-words border-gray-300 text-textDark rounded-md px-6 py-3 text-base font-inter inline-flex items-center justify-center gap-2 transition-colors duration-200 hover:bg-brandBlue hover:text-white';
+            const label = s && s.title ? String(s.title) : String(id).toUpperCase();
+            if (s.logo) {
+              const img = document.createElement('img');
+              img.src = s.logo; img.alt = '';
+              img.className = 'object-contain flex-shrink-0';
+              img.style.width = '32px';
+              img.style.height = '24px';
+              a.appendChild(img);
+            }
+            const span = document.createElement('span');
+            span.textContent = label;
+            a.appendChild(span);
+            useLinks.appendChild(a);
+          });
+        }
+      }
+    })();
+  </script>
 </body>
 
 </html>
+
+
+
+
+

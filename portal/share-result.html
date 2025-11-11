@@ -9,17 +9,7 @@
   <link rel="icon" type="image/x-icon" href="../favicon.ico">
   <link href="https://fonts.googleapis.com/css2?family=Headland+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/output.css">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { inter: ['Inter', 'sans-serif'], headland: ['"Headland One"', 'serif'] },
-          colors: { brandBg: '#FAF5EB', textDark: '#222', cardBg: '#F7EFDD', brandBlue: '#163563', brandBlueHover: '#003d8c' }
-        }
-      }
-    };
-  </script>
-  <title>Portal | Gedeelde gegevens</title>
+  <title>Portal | Resultaat delen</title>
 </head>
 
 <body class="overflow-x-hidden bg-brandBg text-textDark flex items-center justify-center min-h-screen px-8">
@@ -33,21 +23,31 @@
     import { QrFlow } from '../js/qrflow.js';
     const params = new URLSearchParams(location.search);
     const typeParam = (params.get('type') || '').toUpperCase();
-    const portal = (params.get('portal') || '').toUpperCase();
+    const scenarioId = (params.get('scenario') || '').toUpperCase();
     const title = document.getElementById('shareTitle');
-    const backLink = document.querySelector('a[href="index.html"]');
-    const names = { PID: 'PID', INKOMEN: 'Inkomensverklaring', NVM_LIDMAATSCHAP: 'NVM Lidmaatschap' };
-    if (typeParam && title) {
-      if (portal === 'KADASTER') {
-        title.textContent = 'Inloggen bij Kadaster';
-      } else {
-        title.textContent = `${names[typeParam] || typeParam} gedeeld`;
-      }
-    }
     async function loadJson(url) {
       try { const res = await fetch(url, { cache: 'no-cache' }); if (!res.ok) throw new Error('http ' + res.status); return await res.json(); } catch { return null; }
     }
-    const uiSchema = await loadJson('./data/card-ui.json') || {};
+    const uiSchema = await loadJson('../data/card-types.json') || {};
+    const scenarios = await loadJson('../data/use-scenarios.json') || {};
+    const titleFor = (t) => { const k = String(t||'').toUpperCase(); const s = uiSchema[k] || uiSchema[String(k).replace(/_/g,' ')]; return (s && s.title) ? s.title : k; };
+    const scenario = scenarios[scenarioId] || null;
+    const baseHuman = titleFor(typeParam) || 'Gegevens';
+    // While waiting: show scenario.title if provided, else generic
+    if (title) title.textContent = scenario && scenario.title ? String(scenario.title) : `${baseHuman} gedeeld`;
+    function getByPath(obj, path) {
+      try {
+        if (!path) return '';
+        const parts = String(path).split('.').map(s => s.trim()).filter(Boolean);
+        let cur = obj;
+        for (const p of parts) { if (cur == null) return ''; cur = cur[p]; }
+        return cur == null ? '' : String(cur);
+      } catch { return ''; }
+    }
+    function renderTemplate(tpl, ctx) {
+      try { return String(tpl).replace(/\{\{\s*([^}]+)\s*\}\}/g, function(_m, p){ return getByPath(ctx, p); }); } catch { return String(tpl || ''); }
+    }
+    
     function formatDate(ts) { if (!ts) return ''; try { const d = new Date(ts); const dd = String(d.getDate()).padStart(2, '0'); const mm = String(d.getMonth() + 1).padStart(2, '0'); const yyyy = d.getFullYear(); return `${dd}-${mm}-${yyyy}`; } catch { return ''; } }
     function formatCurrencyEUR(val) { const n = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^0-9.,-]/g, '').replace(',', '.')); if (!isFinite(n)) return ''; try { return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n); } catch { return `€ ${Math.round(n).toLocaleString('nl-NL')}`; } }
     function renderDetailsFromSchema(type, payload) {
@@ -110,46 +110,75 @@
         container.innerHTML = '<div class="font-inter text-base text-gray-800">Er is geen toestemming ontvangen. Het verzoek is verlopen.</div>';
       } else if ((shared && shared.outcome === 'not_found') || shared.error === 'not_found') {
         const req = (shared.requestedType || '').toUpperCase();
-        const human = names[req] || req || 'gegevens';
+        const human = titleFor(req) || req || 'gegevens';
         const msg = document.createElement('div');
         msg.className = 'font-inter text-base text-gray-800';
-        if (portal === 'KADASTER') {
-          if (title) title.textContent = 'Inloggen bij Kadaster';
-          msg.textContent = 'De wallet heeft geen NVM Lidmaatschap gevonden. Inloggen bij Kadaster is niet gelukt.';
-        } else {
-          msg.textContent = `De wallet heeft geen ${human} gevonden om te delen.`;
-        }
+        msg.textContent = `De wallet heeft geen ${human} gevonden om te delen.`;
         container.innerHTML = '';
         container.appendChild(msg);
       } else {
+        const head = document.createElement('div');
+        head.className = 'mb-6 flex justify-center';
+        const ctx = { payload: shared.payload || {}, shared: shared, scenario: scenario };
+        // Prefer a specific resultName/resultNameTemplate voor de binnenkop
+        // Ontbreekt of leeg? Dan niets tonen (geen fallback)
+        const nameRaw = (scenario && (scenario.resultNameTemplate || scenario.resultName))
+          ? (scenario.resultNameTemplate ? renderTemplate(scenario.resultNameTemplate, ctx) : scenario.resultName)
+          : '';
+        const name = String(nameRaw || '').trim();
+        const subRaw = (scenario && (scenario.resultSubtitleTemplate || scenario.resultSubtitle))
+          ? (scenario.resultSubtitleTemplate ? renderTemplate(scenario.resultSubtitleTemplate, ctx) : scenario.resultSubtitle)
+          : '';
+        const sub = String(subRaw || '').trim();
+        const showInnerTitle = (!(scenario && scenario.resultShowTitle === false)) && (name.length > 0);
+        const showInnerSubtitle = (!(scenario && scenario.resultShowSubtitle === false)) && (sub.length > 0);
+        head.innerHTML = `${showInnerTitle ? `<div class="font-headland text-xl">${name}</div>` : ''}${showInnerSubtitle ? `<div class=\"font-inter text-sm text-gray-700\">${sub}</div>` : ''}`;
         container.innerHTML = '';
-        if (portal === 'KADASTER') {
-          if (backLink) backLink.textContent = 'Verder';
-          if (title) title.textContent = 'Ingelogd bij Kadaster';
-          const payload = shared.payload || {};
-          const fullName = `${payload.given_name || ''} ${payload.family_name || ''}`.trim();
-          const member = payload.membership_number || '';
-          const wrap = document.createElement('div');
-          wrap.className = 'flex flex-col gap-2';
-          const msg = document.createElement('div');
-          msg.className = 'font-inter text-base text-gray-800';
-          msg.appendChild(document.createTextNode('Je bent ingelogd bij het Kadaster als '));
-          const strong = document.createElement('strong');
-          strong.textContent = fullName || 'onbekend';
-          msg.appendChild(strong);
-          msg.appendChild(document.createTextNode('.'));
-          const nr = document.createElement('div');
-          nr.className = 'font-inter text-base text-gray-800';
-          nr.innerHTML = `<strong>Lidmaatschapsnummer</strong>: ${member || '-'}`;
-          wrap.appendChild(msg);
-          wrap.appendChild(nr);
-          container.appendChild(wrap);
-        } else {
-          const head = document.createElement('div');
-          head.className = 'mb-3';
-          const name = names[(shared.type || '').toUpperCase()] || (shared.type || 'Gegevens');
-          head.innerHTML = `<div class="font-headland text-xl">${name}</div><div class="font-inter text-sm text-gray-700">Ontvangen</div>`;
-          container.appendChild(head);
+        container.appendChild(head);
+        // Set outer title from resultTitle (if provided), inner title uses resultName
+        try {
+          const tEl = document.getElementById('shareTitle');
+          if (tEl) {
+            const outer = (scenario && (scenario.resultTitleTemplate || scenario.resultTitle))
+              ? (scenario.resultTitleTemplate ? renderTemplate(scenario.resultTitleTemplate, ctx) : scenario.resultTitle)
+              : '';
+            if (String(outer || '').trim()) { tEl.textContent = outer; }
+          }
+        } catch {}
+        // Apply scenario branding: optional logo and structured header
+        if (scenario) {
+          try {
+            head.innerHTML = '';
+            if (scenario.logo) {
+              const img = document.createElement('img');
+              img.src = scenario.logo; img.alt = '';
+              img.className = 'object-contain mb-1';
+              img.style.maxWidth = '128px';
+              img.style.maxHeight = '128px';
+              head.appendChild(img);
+            }
+            if (showInnerTitle) {
+              const titleEl = document.createElement('div');
+              titleEl.className = 'font-headland text-xl';
+              titleEl.textContent = name;
+              head.appendChild(titleEl);
+            }
+            if (showInnerSubtitle) {
+              const subEl = document.createElement('div');
+              subEl.className = 'font-inter text-sm text-gray-700';
+              subEl.textContent = sub;
+              head.appendChild(subEl);
+            }
+          } catch {}
+        }
+        if (scenario && scenario.resultTemplate) {
+          const custom = document.createElement('div');
+          custom.className = 'font-inter text-base text-gray-800 mb-3';
+          custom.textContent = renderTemplate(scenario.resultTemplate, ctx);
+          container.appendChild(custom);
+        }
+        const showDetails = !(scenario && scenario.showDetails === false);
+        if (showDetails) {
           container.appendChild(renderDetailsFromSchema((shared.type || '').toUpperCase(), shared.payload || {}));
         }
       }

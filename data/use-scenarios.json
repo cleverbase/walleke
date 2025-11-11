@@ -1,0 +1,36 @@
+{
+  "SHARE_PID": {
+    "visible": true,
+    "title": "Identiteit delen",
+    "subtitle": "Scan de QR-code",
+    "request": { "typeRef": "PID" },
+    "resultTitle": "De volgende gegevens zijn gedeeld:",
+    "resultNameTemplate": "PID"
+  },
+  "SHARE_INKOMEN": {
+    "visible": true,
+    "title": "Inkomensverklaring delen",
+    "subtitle": "Scan de QR-code",
+    "request": { "typeRef": "INKOMEN" },
+    "resultTitle": "De volgende gegevens zijn gedeeld:",
+    "resultNameTemplate": "Inkomensverklaring"
+  },
+  "SHARE_NVM_LIDMAATSCHAP": {
+    "visible": false,
+    "title": "NVM-lidmaatschap delen",
+    "subtitle": "Scan de QR-code",
+    "request": { "typeRef": "NVM_LIDMAATSCHAP" },
+    "resultTitle": "De volgende gegevens zijn gedeeld:",
+    "resultNameTemplate": "NVM-lidmaatschap"
+  },
+  "LOGIN_KADASTER": {
+    "visible": true,
+    "title": "Inloggen bij Kadaster",
+    "subtitle": "Scan de QR-code",
+    "request": { "typeRef": "NVM_LIDMAATSCHAP" },
+    "resultTitle": "Ingelogd bij Kadaster",
+    "resultTemplate": "Je bent ingelogd als {{payload.given_name}} {{payload.family_name}} (lid: {{payload.membership_number}}).",
+    "showDetails": false,
+    "logo": "../img/kadaster_logo_20230130.png"
+  }
+}

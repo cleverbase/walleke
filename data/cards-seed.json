@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "cards": [
+    { "typeRef": "PID", "contentRef": "PID_REMCO" },
+    { "typeRef": "INKOMEN", "contentRef": "INKOMEN_2024_REMCO" },
+    { "typeRef": "INKOMEN", "contentRef": "INKOMEN_2023_REMCO" }
+  ]
+}

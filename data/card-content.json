@@ -1,5 +1,7 @@
 {
-  "PID": {
+  "PID_REMCO": {
+    "visible": true,
+    "type": "PID",
     "issuer": "Gemeente Den Haag",
     "payload": {
       "given_name": "Remco",
@@ -10,11 +12,21 @@
       "bsn": "123456789"
     }
   },
-  "INKOMEN": {
+  "INKOMEN_2024_REMCO": {
+    "visible": true,
+    "type": "INKOMEN",
     "issuer": "Belastingdienst",
     "payload": { "nl_bld_bri_year": "2024", "nl_bld_bri_income": 62000 }
   },
-  "NVM LIDMAATSCHAP": {
+  "INKOMEN_2023_REMCO": {
+    "visible": false,
+    "type": "INKOMEN",
+    "issuer": "Belastingdienst",
+    "payload": { "nl_bld_bri_year": "2023", "nl_bld_bri_income": 58000 }
+  },
+  "NVM_REMCO": {
+    "visible": true,
+    "type": "NVM_LIDMAATSCHAP",
     "issuer": "NVM",
     "payload": {
       "given_name": "Remco",

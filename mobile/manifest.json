@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "Demo",
-  "short_name": "Demo",
+  "name": "Cleverbase Wallet",
+  "short_name": "Wallet",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
