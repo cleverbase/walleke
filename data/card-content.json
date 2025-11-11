@@ -3,12 +3,14 @@
     "visible": true,
     "type": "PID",
     "issuer": "Gemeente Den Haag",
+    "issuedAt": "2025-11-11T20:21:00+01:00",
+    "expiresAt": "2026-11-11T20:21:00+01:00",
     "payload": {
       "given_name": "Remco",
       "family_name": "van Wijk",
       "birth_date": "1980-06-24",
       "age_over_18": true,
-      "nationality": ["NL"],
+      "nationality": "NL",
       "bsn": "123456789"
     }
   },
@@ -16,18 +18,30 @@
     "visible": true,
     "type": "INKOMEN",
     "issuer": "Belastingdienst",
-    "payload": { "nl_bld_bri_year": "2024", "nl_bld_bri_income": 62000 }
+    "issuedAt": "2025-11-11T20:21:00+01:00",
+    "expiresAt": "2026-11-11T20:21:00+01:00",
+    "payload": {
+      "nl_bld_bri_year": "2024",
+      "nl_bld_bri_income": 62000
+    }
   },
   "INKOMEN_2023_REMCO": {
     "visible": false,
     "type": "INKOMEN",
     "issuer": "Belastingdienst",
-    "payload": { "nl_bld_bri_year": "2023", "nl_bld_bri_income": 58000 }
+    "issuedAt": "2025-11-11T20:21:00+01:00",
+    "expiresAt": "2026-11-11T20:21:00+01:00",
+    "payload": {
+      "nl_bld_bri_year": "2023",
+      "nl_bld_bri_income": 58000
+    }
   },
   "NVM_REMCO": {
     "visible": true,
     "type": "NVM_LIDMAATSCHAP",
     "issuer": "NVM",
+    "issuedAt": "2025-11-11T20:21:00+01:00",
+    "expiresAt": "2026-11-11T20:21:00+01:00",
     "payload": {
       "given_name": "Remco",
       "family_name": "van Wijk",

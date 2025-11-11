@@ -277,11 +277,11 @@ function renderCards() {
     el.className = 'bg-cardBg rounded-xl p-4 border border-gray-200 flex flex-col gap-3';
 
     const header = document.createElement('div');
-    header.className = 'flex items-center justify-between gap-4';
+    header.className = 'flex items-start justify-between gap-4';
     const title = document.createElement('div');
     title.innerHTML = `<div class=\"font-headland text-lg\">${labelForType(c.type)}</div><div class=\"font-inter text-sm text-gray-700\">${c.issuer}</div>`;
     const leftWrap = document.createElement('div');
-    leftWrap.className = 'flex items-center gap-3';
+    leftWrap.className = 'flex items-start gap-3';
     leftWrap.appendChild(title);
     const statusNow = computeStatus(c);
     const badge = document.createElement('span');
@@ -291,8 +291,8 @@ function renderCards() {
       badge.className = 'font-inter text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-800';
     }
     badge.textContent = statusNow;
-    leftWrap.appendChild(badge);
     header.appendChild(leftWrap);
+    header.appendChild(badge);
     el.appendChild(header);
 
     const details = document.createElement('div');
