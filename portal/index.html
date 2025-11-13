@@ -52,7 +52,7 @@
           if (item && item.visible === false) return; // hide drafts
           const a = document.createElement('a');
           a.href = `add.html?type=${encodeURIComponent(item && item.type || "")}&content=${encodeURIComponent(ref)}`;
-          a.className = 'bg-white border text-center hyphens-auto border-gray-300 text-textDark rounded-md px-6 py-3 text-base font-inter inline-flex items-center justify-center gap-2 transition-colors duration-200 hover:bg-brandBlue hover:text-white';
+          a.className = 'bg-white border text-center hyphens-auto border-gray-300 text-textDark rounded-md px-6 py-3 text-base font-inter inline-flex items-center justify-center gap-2 transition-colors duration-200 hover:bg-brandBlueHover hover:text-white';
           a.textContent = titleFor(item && item.type || "");
           addLinks.appendChild(a);
         });
@@ -74,7 +74,7 @@
             const a = document.createElement('a');
             a.href = `share.html?scenario=${encodeURIComponent(id)}`;
             // Match generic card style (hover, border, colors)
-            a.className = 'bg-white border text-center hyphens-none break-words border-gray-300 text-textDark rounded-md px-6 py-3 text-base font-inter inline-flex items-center justify-center gap-2 transition-colors duration-200 hover:bg-brandBlue hover:text-white';
+            a.className = 'bg-white border text-center hyphens-none break-words border-gray-300 text-textDark rounded-md px-6 py-3 text-base font-inter inline-flex items-center justify-center gap-2 transition-colors duration-200 hover:bg-brandBlueHover hover:text-white';
             const label = s && s.title ? String(s.title) : String(id).toUpperCase();
             if (s.logo) {
               const img = document.createElement('img');
@@ -96,7 +96,6 @@
 </body>
 
 </html>
-
 
 
 
