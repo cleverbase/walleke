@@ -36,6 +36,8 @@ let state = loadState();
 let settings = loadSettings();
 const pendingMeta = new Map();
 let uiSchema = {};
+let scenarioConfigs = {};
+const scenarioAttrByKey = new Map();
 let pendingShare = null; // { id, meta, candidates: Card[], selectedIndex: number }
 let shareStatusUnsub = null; // unsubscribe for expired status listener
 
@@ -130,6 +132,154 @@ function renderDetailsFromSchema(type, payload) {
     frag.appendChild(row);
   });
   return frag;
+}
+
+function schemaForType(type) {
+  const key = canonicalType(type || '');
+  if (!uiSchema) return null;
+  return uiSchema[key] || uiSchema[String(key).replace(/_/g, ' ')] || null;
+}
+
+function normalizePinValue(pinValue) {
+  const raw = pinValue == null ? '' : String(pinValue);
+  const digitsOnly = raw.replace(/\D/g, '');
+  return digitsOnly || '123456';
+}
+
+function getConfiguredPinValue() {
+  try {
+    const scanner = document.querySelector('[data-qrflow="scanner"]');
+    const attr = scanner?.getAttribute('data-pin-value');
+    return normalizePinValue(attr);
+  } catch {
+    return '123456';
+  }
+}
+
+function setScenarioAttributes(configs) {
+  scenarioConfigs = configs || {};
+  scenarioAttrByKey.clear();
+  if (!configs || typeof configs !== 'object') return;
+  Object.entries(configs).forEach(([scenarioId, cfg]) => {
+    if (!cfg || typeof cfg !== 'object') return;
+    const attrs = cfg.request && cfg.request.attributes ? cfg.request.attributes : null;
+    if (!attrs) return;
+    const scenarioKey = `scenario:${String(scenarioId || '').toUpperCase()}`;
+    if (scenarioKey.trim()) {
+      scenarioAttrByKey.set(scenarioKey, attrs);
+    }
+    const typeRaw = cfg.request && (cfg.request.typeRef || cfg.request.type);
+    const typeKey = canonicalType(typeRaw || '');
+    if (typeKey) {
+      const mapKey = `type:${typeKey}`;
+      if (!scenarioAttrByKey.has(mapKey)) {
+        scenarioAttrByKey.set(mapKey, attrs);
+      }
+    }
+  });
+}
+
+function resolveAttributesForMeta(meta, type) {
+  if (meta && (meta.attributes || (meta.scope && meta.scope.attributes))) {
+    return meta.attributes || (meta.scope && meta.scope.attributes) || null;
+  }
+  const scenarioId = meta && meta.scenario ? String(meta.scenario).toUpperCase() : '';
+  if (scenarioId) {
+    const fromScenario = scenarioAttrByKey.get(`scenario:${scenarioId}`);
+    if (fromScenario) return fromScenario;
+    if (scenarioConfigs[scenarioId] && scenarioConfigs[scenarioId].request && scenarioConfigs[scenarioId].request.attributes) {
+      return scenarioConfigs[scenarioId].request.attributes;
+    }
+  }
+  const resolvedType = canonicalType(type || meta?.type || '');
+  if (resolvedType) {
+    const fromType = scenarioAttrByKey.get(`type:${resolvedType}`);
+    if (fromType) return fromType;
+  }
+  return null;
+}
+
+function formatFieldDisplay(type, key, payload) {
+  const schema = schemaForType(type);
+  const labels = schema?.labels || {};
+  const formatMap = schema?.format || {};
+  const raw = payload ? payload[key] : undefined;
+  let value = raw;
+  const fmt = formatMap[key];
+  if (fmt === 'date') {
+    if (typeof raw === 'string') {
+      try { value = formatDate(new Date(raw).getTime()); } catch { value = raw; }
+    } else if (typeof raw === 'number') {
+      value = formatDate(raw);
+    }
+  } else if (fmt === 'boolean') {
+    value = raw ? 'ja' : 'nee';
+  } else if (fmt === 'eur') {
+    value = formatCurrencyEUR(raw);
+  } else if (Array.isArray(raw)) {
+    value = raw.map((v) => (typeof v === 'object' ? JSON.stringify(v) : String(v))).join(', ');
+  } else if (typeof raw === 'object' && raw != null) {
+    try { value = JSON.stringify(raw); } catch { value = String(raw); }
+  }
+  return {
+    label: labels[key] || key,
+    value: value == null ? '' : String(value),
+  };
+}
+
+function humanList(items) {
+  const list = (items || []).map((v) => String(v || '').trim()).filter(Boolean);
+  if (list.length === 0) return '';
+  if (list.length === 1) return list[0];
+  if (list.length === 2) return `${list[0]} en ${list[1]}`;
+  return `${list.slice(0, list.length - 1).join(', ')} en ${list[list.length - 1]}`;
+}
+
+function buildAttributePlan(card, meta) {
+  const type = canonicalType(card?.type || '');
+  const schema = schemaForType(type);
+  const order = Array.isArray(schema?.order) ? schema.order.slice() : [];
+  const payloadKeys = Object.keys(card?.payload || {});
+  payloadKeys.forEach((k) => { if (!order.includes(k)) order.push(k); });
+  const attrMeta = resolveAttributesForMeta(meta || {}, type) || {};
+  const normalize = (key) => String(key || '').trim();
+  const required = new Set(Array.isArray(attrMeta.required) ? attrMeta.required.map(normalize).filter(Boolean) : []);
+  const optional = new Set(Array.isArray(attrMeta.optional) ? attrMeta.optional.map(normalize).filter(Boolean) : []);
+  if (required.size === 0 && optional.size === 0) {
+    payloadKeys.forEach((key) => required.add(key));
+  } else if (required.size === 0) {
+    payloadKeys.forEach((key) => { if (!optional.has(key)) required.add(key); });
+  }
+  return { type, schema, order, required, optional };
+}
+
+function ensureSelectionForCard(share, card, plan) {
+  if (!share) return new Set();
+  if (!share.fieldSelections) share.fieldSelections = new Map();
+  const selectionKey = card && card.id ? card.id : `${share.id || 'share'}-${plan.type || 'generic'}-${plan.order.length}`;
+  let selection = share.fieldSelections.get(selectionKey);
+  if (!selection) {
+    selection = new Set();
+    const autoSelectAll = plan.required.size === 0 && plan.optional.size === 0;
+    plan.order.forEach((field) => {
+      if (!card?.payload || !Object.prototype.hasOwnProperty.call(card.payload, field)) return;
+      if (autoSelectAll || plan.required.has(field)) {
+        selection.add(field);
+      }
+    });
+    share.fieldSelections.set(selectionKey, selection);
+  }
+  plan.order.forEach((field) => {
+    if (plan.required.has(field) && card?.payload && Object.prototype.hasOwnProperty.call(card.payload, field)) {
+      selection.add(field);
+    }
+  });
+  Array.from(selection).forEach((field) => {
+    if (!card?.payload || !Object.prototype.hasOwnProperty.call(card.payload, field)) {
+      selection.delete(field);
+    }
+  });
+  return selection;
 }
 
 function migrateState() {
@@ -334,7 +484,7 @@ function renderCards() {
   });
 }
 
-async function confirmWithPin(pinValue = '12345') {
+async function confirmWithPin(pinValue = '123456') {
   return new Promise((resolve) => {
     try {
       const overlay = document.getElementById('pinOverlay');
@@ -343,10 +493,32 @@ async function confirmWithPin(pinValue = '12345') {
       const backBtn = overlay?.querySelector('#pinBack');
       const cancelBtn = overlay?.querySelector('#pinCancel');
       const err = overlay?.querySelector('#pinError');
+      const pad = overlay?.querySelector('#pinPadContent') || overlay?.querySelector('#pinPad');
+      const checking = overlay?.querySelector('#pinChecking');
       if (!overlay || !dots || !keys || !err) { resolve(true); return; }
 
       let value = '';
-      const PIN = (pinValue || '12345').toString();
+      const PIN = normalizePinValue(pinValue || '123456');
+      let isChecking = false;
+      const setChecking = (checkingOn) => {
+        isChecking = !!checkingOn;
+        if (pad) {
+          pad.style.opacity = isChecking ? '0.35' : '';
+          pad.style.filter = isChecking ? 'blur(1px)' : '';
+        }
+        if (checking) checking.classList.toggle('hidden', !isChecking);
+      };
+      const setInteractivity = (enabled) => {
+        keys.forEach((k) => { try { k.disabled = !enabled; } catch {} });
+        if (backBtn) { try { backBtn.disabled = !enabled; } catch {} }
+        if (cancelBtn) {
+          try {
+            cancelBtn.style.pointerEvents = enabled ? '' : 'none';
+            if (enabled) cancelBtn.removeAttribute('aria-disabled');
+            else cancelBtn.setAttribute('aria-disabled', 'true');
+          } catch {}
+        }
+      };
       const renderDots = () => {
         dots.forEach((d, i) => {
           d.className = i < value.length
@@ -375,12 +547,18 @@ async function confirmWithPin(pinValue = '12345') {
           return;
         }
         clearErr();
-        cleanup();
-        hideOverlay();
-        resolve(true);
+        setChecking(true);
+        setInteractivity(false);
+        setTimeout(() => {
+          cleanup();
+          setChecking(false);
+          hideOverlay();
+          resolve(true);
+        }, 2000);
       };
 
       const onKey = (e) => {
+        if (isChecking) return;
         e?.preventDefault?.();
         const t = e.currentTarget;
         if (!(t instanceof Element)) return;
@@ -392,9 +570,22 @@ async function confirmWithPin(pinValue = '12345') {
         renderDots();
         if (value.length === PIN.length) trySubmit();
       };
-      const onBack = (e) => { e?.preventDefault?.(); clearErr(); value = value.slice(0, -1); renderDots(); };
-      const onCancel = (e) => { e?.preventDefault?.(); cleanup(); hideOverlay(); resolve(false); };
+      const onBack = (e) => {
+        if (isChecking) return;
+        e?.preventDefault?.();
+        clearErr();
+        value = value.slice(0, -1);
+        renderDots();
+      };
+      const onCancel = (e) => {
+        if (isChecking) return;
+        e?.preventDefault?.();
+        cleanup();
+        hideOverlay();
+        resolve(false);
+      };
       const onKeydown = (e) => {
+        if (isChecking) return;
         if (/^[0-9]$/.test(e.key)) {
           if (value.length < PIN.length) {
             value += e.key;
@@ -415,6 +606,8 @@ async function confirmWithPin(pinValue = '12345') {
       window.addEventListener('keydown', onKeydown, { once: false });
 
       clearErr();
+      setChecking(false);
+      setInteractivity(true);
       renderDots();
       showOverlay();
     } catch {
@@ -466,10 +659,115 @@ function renderShareView() {
   pendingShare.selectedIndex = sel;
   const renderSelected = () => {
     const card = cards[pendingShare.selectedIndex];
-    const title = labelForType(card.type);
-    info.textContent = `Kies de gegevens om te delen. Geselecteerd: ${title}`;
+    if (!card) return;
+    const plan = buildAttributePlan(card, meta || {});
+    const selection = ensureSelectionForCard(pendingShare, card, plan);
+    pendingShare.selectedFields = selection;
+    const payload = card.payload || {};
+    const availableKeys = plan.order.filter((key) => Object.prototype.hasOwnProperty.call(payload, key));
+    const requiredLabels = Array.from(plan.required).map((key) => {
+      const out = formatFieldDisplay(card.type, key, payload);
+      return out.label || key;
+    }).filter(Boolean);
+    info.innerHTML = '';
+    const infoWrap = document.createElement('div');
+    infoWrap.className = 'flex flex-col gap-1';
+    const infoTitle = document.createElement('p');
+    infoTitle.className = 'font-inter text-sm text-gray-800';
+    infoTitle.textContent = `Selecteer welke gegevens je deelt (${labelForType(card.type)}).`;
+    infoWrap.appendChild(infoTitle);
+    if (requiredLabels.length) {
+      const reqText = document.createElement('p');
+      reqText.className = 'font-inter text-xs text-gray-600';
+      reqText.textContent = `Verplicht: ${humanList(requiredLabels)}.`;
+      infoWrap.appendChild(reqText);
+    }
+    info.appendChild(infoWrap);
+    const count = document.createElement('p');
+    count.className = 'font-inter text-xs text-gray-600';
+    count.textContent = `${selection.size}/${availableKeys.length} attributen geselecteerd`;
+    info.appendChild(count);
     details.innerHTML = '';
-    details.appendChild(renderDetailsFromSchema(card.type, card.payload || {}));
+    const missingRequired = Array.from(plan.required).filter((key) => !availableKeys.includes(key));
+    const expired = Boolean(pendingShare._expired);
+    if (missingRequired.length) {
+      const labels = missingRequired.map((key) => formatFieldDisplay(card.type, key, payload).label || key);
+      err.textContent = `Deze kaart mist verplichte gegevens: ${humanList(labels)}. Kies een andere kaart.`;
+      btn.disabled = true;
+    } else if (!expired) {
+      err.textContent = '';
+      btn.disabled = false;
+      try { btn.style.display = ''; } catch {}
+    }
+    if (expired) {
+      err.textContent = 'Het verzoek is verlopen. Vraag een nieuwe QR-code aan.';
+      try { btn.disabled = true; btn.style.display = 'none'; } catch {}
+      if (cancel) { cancel.textContent = 'Terug'; cancel.style.display = ''; }
+    }
+    const list = document.createElement('div');
+    list.className = 'flex flex-col gap-3';
+    const baseRowCls = 'w-full text-left flex items-center justify-between gap-4 rounded-2xl border px-4 py-3 transition-all duration-150';
+    const toggleVisual = (span, checked) => {
+      span.style.borderColor = 'var(--color-brandBlue, #163563)';
+      span.style.backgroundColor = checked ? 'var(--color-brandBlue, #163563)' : '#fff';
+      span.style.color = checked ? '#fff' : 'transparent';
+      if (expired) span.style.opacity = '0.5';
+    };
+    availableKeys.forEach((key) => {
+      const required = plan.required.has(key);
+      const checked = selection.has(key);
+      const row = document.createElement('button');
+      row.type = 'button';
+      let rowCls = baseRowCls;
+      rowCls += checked ? ' bg-white border-gray-300' : ' bg-white/70 border-gray-200';
+      if (required || expired) {
+        rowCls += ' cursor-default';
+        if (expired) rowCls += ' opacity-60';
+      } else {
+        rowCls += ' cursor-pointer hover:border-gray-400 hover:bg-white';
+      }
+      row.className = rowCls;
+      const content = document.createElement('div');
+      content.className = 'flex flex-col items-start gap-1';
+      const labelRow = document.createElement('div');
+      labelRow.className = 'flex items-center gap-2';
+      const labelEl = document.createElement('span');
+      labelEl.className = 'font-inter text-sm text-gray-900';
+      const out = formatFieldDisplay(card.type, key, payload);
+      labelEl.textContent = out.label;
+      labelRow.appendChild(labelEl);
+      if (required) {
+        const badge = document.createElement('span');
+        badge.className = 'font-inter text-xs uppercase tracking-wide px-2 py-0.5 rounded-full';
+        badge.style.backgroundColor = 'rgba(22, 53, 99, 0.12)';
+        badge.style.color = 'var(--color-brandBlue, #163563)';
+        badge.textContent = 'Verplicht';
+        labelRow.appendChild(badge);
+      }
+      const valueEl = document.createElement('span');
+      valueEl.className = 'font-inter text-xs text-gray-700 break-words';
+      valueEl.textContent = out.value || 'Niet beschikbaar';
+      content.appendChild(labelRow);
+      content.appendChild(valueEl);
+      const toggle = document.createElement('span');
+      toggle.className = 'w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-150 select-none';
+      toggle.innerHTML = '<svg viewBox="0 0 16 12" width="12" height="12" aria-hidden="true" focusable="false"><path d="M1 5.5 5.5 10 15 1.5" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
+      if (required || expired) {
+        toggle.classList.add('cursor-default');
+      }
+      toggleVisual(toggle, checked);
+      row.appendChild(content);
+      row.appendChild(toggle);
+      if (!required && !expired) {
+        row.addEventListener('click', () => {
+          if (selection.has(key)) selection.delete(key);
+          else selection.add(key);
+          renderSelected();
+        });
+      }
+      list.appendChild(row);
+    });
+    details.appendChild(list);
   };
   if (choices) {
     choices.innerHTML = '';
@@ -505,13 +803,35 @@ function renderShareView() {
       return;
     }
     btn.disabled = true;
-    const ok = await confirmWithPin('12345');
+    const pinValue = getConfiguredPinValue();
+    const ok = await confirmWithPin(pinValue);
     if (!ok) { btn.disabled = false; return; }
     try {
       const f = await flow();
       const card = cards[pendingShare.selectedIndex];
-      await f.setShared(pendingShare.id, { type: card.type, issuer: card.issuer, payload: card.payload, version: 1 });
-      await f.setResponse(pendingShare.id, { outcome: 'ok', type: card.type, issuer: card.issuer, payload: card.payload, version: 1 });
+      const plan = buildAttributePlan(card, meta || {});
+      const selection = ensureSelectionForCard(pendingShare, card, plan);
+      const selectedKeys = Array.from(selection || []);
+      if (!selectedKeys.length) {
+        err.textContent = 'Selecteer minstens één attribuut om te delen.';
+        btn.disabled = false;
+        return;
+      }
+      const filteredPayload = {};
+      selectedKeys.forEach((key) => {
+        if (card.payload && Object.prototype.hasOwnProperty.call(card.payload, key)) {
+          filteredPayload[key] = card.payload[key];
+        }
+      });
+      await f.setShared(pendingShare.id, { type: card.type, issuer: card.issuer, payload: filteredPayload, version: 1 });
+      await f.setResponse(pendingShare.id, {
+        outcome: 'ok',
+        type: card.type,
+        issuer: card.issuer,
+        payload: filteredPayload,
+        version: 1,
+        selectedFields: selectedKeys,
+      });
       await f.markCompleted(pendingShare.id);
     } catch {}
     try { sessionStorage.setItem('lastAction', 'shared'); } catch {}
@@ -531,6 +851,7 @@ function renderShareView() {
         try { btn.disabled = true; btn.style.display = 'none'; } catch {}
         if (err) err.textContent = 'Het verzoek is verlopen. Vraag een nieuwe QR-code aan.';
         if (cancel) { cancel.textContent = 'Terug'; cancel.style.display = ''; }
+        try { renderSelected(); } catch {}
       });
     } catch {}
   })();
@@ -713,7 +1034,7 @@ function attachScanHandlers() {
           if (reqType === '' && candidates.length === 0 && state.cards.length === 1) {
             candidates = [state.cards[0]];
           }
-          pendingShare = { id, meta, candidates, selectedIndex: 0 };
+          pendingShare = { id, meta, candidates, selectedIndex: 0, fieldSelections: new Map() };
           try { window.location.hash = '#/share'; } catch {}
           renderShareView();
         }
@@ -771,7 +1092,8 @@ function attachScanHandlers() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  loadJson('../data/card-types.json').then((s) => { uiSchema = s || {}; renderCards(); });
+loadJson('../data/card-types.json').then((s) => { uiSchema = s || {}; renderCards(); });
+loadJson('../data/use-scenarios.json').then((s) => { setScenarioAttributes(s || {}); }).catch(() => {});
   migrateState();
   renderCards();
   attachScanHandlers();

@@ -33,7 +33,6 @@
     const titleFor = (t) => { const k = String(t||'').toUpperCase(); const s = uiSchema[k] || uiSchema[String(k).replace(/_/g,' ')]; return (s && s.title) ? s.title : k; };
     const scenario = scenarios[scenarioId] || null;
     const baseHuman = titleFor(typeParam) || 'Gegevens';
-    // While waiting: show scenario.title if provided, else generic
     if (title) title.textContent = scenario && scenario.title ? String(scenario.title) : `${baseHuman} gedeeld`;
     function getByPath(obj, path) {
       try {
@@ -66,23 +65,29 @@
       const labels = schema.labels || {};
       const format = schema.format || {};
       order.forEach((key) => {
-        const raw = payload ? payload[key] : undefined;
+        const hasValue = payload && Object.prototype.hasOwnProperty.call(payload, key);
+        const raw = hasValue ? payload[key] : undefined;
+        const isMissing = !hasValue || raw === null || (typeof raw === 'string' && raw.trim() === '');
         let val = raw;
         const fmt = format[key];
-        if (fmt === 'date') {
+        if (!isMissing && fmt === 'date') {
           if (typeof raw === 'string') { try { val = formatDate(Date.parse(raw)); } catch { val = raw; } }
           else if (typeof raw === 'number') { val = formatDate(raw); }
-        } else if (fmt === 'boolean') {
+        } else if (!isMissing && fmt === 'boolean') {
           val = raw ? 'ja' : 'nee';
-        } else if (fmt === 'eur') {
+        } else if (!isMissing && fmt === 'eur') {
           val = formatCurrencyEUR(raw);
-        } else if (Array.isArray(raw)) {
+        } else if (!isMissing && Array.isArray(raw)) {
           val = raw.join(', ');
-        } else if (typeof raw === 'object' && raw != null) {
+        } else if (!isMissing && typeof raw === 'object' && raw != null) {
           val = JSON.stringify(raw);
         }
         const row = document.createElement('div');
-        row.innerHTML = `<strong>${labels[key] || key}</strong>: ${val ?? ''}`;
+        if (isMissing) {
+          row.innerHTML = `<strong>${labels[key] || key}</strong>: <span class="text-neutral-300">Niet gedeeld</span>`;
+        } else {
+          row.innerHTML = `<strong>${labels[key] || key}</strong>: ${val ?? ''}`;
+        }
         frag.appendChild(row);
       });
       return frag;
@@ -101,7 +106,7 @@
       showWaiting();
       let shared = null;
       const start = Date.now();
-      while (!shared && (Date.now() - start) < 30000) {
+      while (!shared && (Date.now() - start) < 60000) {
         try { shared = await f.getShared(id); } catch { }
         if (shared) break;
         await new Promise(r => setTimeout(r, 300));

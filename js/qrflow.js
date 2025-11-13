@@ -134,6 +134,7 @@ export class QrFlow {
       type: request?.type || '',
       scope: request?.scope || undefined,
       reason: request?.reason || undefined,
+      attributes: request?.attributes || undefined,
       version: request?.version || 1,
     };
     await set(ref(this.db, `sessions/${qrId}/request`), normalized);
@@ -149,6 +150,9 @@ export class QrFlow {
     const { ref, set } = this.api;
     const payload = shared && shared.payload ? shared.payload : (shared || {});
     const normalized = { type: shared?.type || '', issuer: shared?.issuer || '', payload, version: shared?.version || 1 };
+    if (Array.isArray(shared?.selectedFields) && shared.selectedFields.length) {
+      normalized.selectedFields = shared.selectedFields.map((k) => (k == null ? '' : String(k))).filter(Boolean);
+    }
     await set(ref(this.db, `sessions/${qrId}/shared`), normalized);
     // Also write to response for new structure
     const outcome = shared && shared.error === 'not_found' ? 'not_found' : 'ok';

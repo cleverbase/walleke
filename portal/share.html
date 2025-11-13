@@ -24,7 +24,9 @@
         <button id="copyQrCode" class="bg-brandBlue hover:bg-brandBlueHover text-white rounded-md px-3 py-2 text-sm font-inter">Kopieer</button>
       </div>
       <p class="font-inter text-xs text-gray-700 mt-2">Plak de code in de wallet als alternatief voor scannen.</p>
-    </div>  <script>
+    </div>
+
+  <script>
     (function(){
       const qrEl = document.getElementById('qrcode');
       const input = document.getElementById('qrCodeText');
@@ -74,6 +76,24 @@
     const type = String(rawType).toUpperCase();
     const title = document.getElementById('qrTitle');
     const titleFor = (t) => { const k = String(t||'').toUpperCase(); const s = types[k] || types[String(k).replace(/_/g,' ')]; return (s && s.title) ? s.title : k; };
+
+    const schemaForType = (() => {
+      const direct = types[type];
+      if (direct) return direct;
+      const fallback = types[String(type).replace(/_/g, ' ')];
+      return fallback || null;
+    })();
+    const uniqueKeys = (list = []) => Array.from(new Set((list || []).map((k) => String(k || '').trim()).filter(Boolean)));
+    const buildAttrConfig = (raw) => {
+      const order = Array.isArray(schemaForType?.order) ? schemaForType.order.slice() : Object.keys(schemaForType?.labels || {});
+      const rawRequired = raw && Array.isArray(raw.required) && raw.required.length ? raw.required : order;
+      let required = uniqueKeys(rawRequired);
+      if (required.length === 0 && order.length) required = order.slice();
+      const rawOptional = raw && Array.isArray(raw.optional) ? raw.optional : order.filter((k) => !required.includes(k));
+      const optional = uniqueKeys(rawOptional).filter((k) => !required.includes(k));
+      return { required, optional };
+    };
+    const attrConfig = buildAttrConfig(scenario?.request?.attributes);
     if (title) title.textContent = scenario && scenario.title ? String(scenario.title) : `Scan de QR-code (gebruik ${titleFor(type)})`;
     const subTop = document.getElementById('qrSubtitleTop');
     if (subTop) subTop.textContent = scenario && scenario.subtitle ? String(scenario.subtitle) : `Vraag aan de wallet om de ${titleFor(type)} te delen.`;
@@ -113,7 +133,17 @@
           qrEl2.dataset.nextUrl = next.pathname + next.search;
         }
       } catch {}
-      try { await f.setRequest(id, { intent: 'use_card', type, scenario: scenarioId || undefined, version: 1 }); } catch {}
+      const attrPayload = { required: [...(attrConfig.required || [])], optional: [...(attrConfig.optional || [])] };
+      try {
+        await f.setRequest(id, {
+          intent: 'use_card',
+          type,
+          scenario: scenarioId || undefined,
+          version: 1,
+          attributes: attrPayload,
+          scope: { attributes: attrPayload }
+        });
+      } catch {}
       try { await f.setSessionInfo(id, { intent: 'use_card', kind: 'request', type, scenario: scenarioId || undefined }); } catch {}
       try { sessionStorage.setItem('qrId', id); } catch {}
     }

@@ -3,7 +3,21 @@
     "visible": true,
     "title": "Identiteit delen",
     "subtitle": "Scan de QR-code",
-    "request": { "typeRef": "PID" },
+    "request": {
+      "typeRef": "PID",
+      "attributes": {
+        "required": [
+          "given_name",
+          "family_name",
+          "birth_date"
+        ],
+        "optional": [
+          "age_over_18",
+          "nationality",
+          "bsn"
+        ]
+      }
+    },
     "resultTitle": "De volgende gegevens zijn gedeeld:",
     "resultNameTemplate": "PID"
   },
@@ -11,7 +25,16 @@
     "visible": true,
     "title": "Inkomensverklaring delen",
     "subtitle": "Scan de QR-code",
-    "request": { "typeRef": "INKOMEN" },
+    "request": {
+      "typeRef": "INKOMEN",
+      "attributes": {
+        "required": [
+          "nl_bld_bri_year",
+          "nl_bld_bri_income"
+        ],
+        "optional": []
+      }
+    },
     "resultTitle": "De volgende gegevens zijn gedeeld:",
     "resultNameTemplate": "Inkomensverklaring"
   },
@@ -19,7 +42,17 @@
     "visible": false,
     "title": "NVM-lidmaatschap delen",
     "subtitle": "Scan de QR-code",
-    "request": { "typeRef": "NVM_LIDMAATSCHAP" },
+    "request": {
+      "typeRef": "NVM_LIDMAATSCHAP",
+      "attributes": {
+        "required": [
+          "given_name",
+          "family_name",
+          "membership_number"
+        ],
+        "optional": []
+      }
+    },
     "resultTitle": "De volgende gegevens zijn gedeeld:",
     "resultNameTemplate": "NVM-lidmaatschap"
   },
@@ -27,7 +60,17 @@
     "visible": true,
     "title": "Inloggen bij Kadaster",
     "subtitle": "Scan de QR-code",
-    "request": { "typeRef": "NVM_LIDMAATSCHAP" },
+    "request": {
+      "typeRef": "NVM_LIDMAATSCHAP",
+      "attributes": {
+        "required": [
+          "given_name",
+          "family_name",
+          "membership_number"
+        ],
+        "optional": []
+      }
+    },
     "resultTitle": "Ingelogd bij Kadaster",
     "resultTemplate": "Je bent ingelogd als {{payload.given_name}} {{payload.family_name}} (lid: {{payload.membership_number}}).",
     "showDetails": false,
