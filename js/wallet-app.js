@@ -676,17 +676,7 @@ function renderShareView() {
     infoTitle.className = 'font-inter text-sm text-gray-800';
     infoTitle.textContent = `Selecteer welke gegevens je deelt (${labelForType(card.type)}).`;
     infoWrap.appendChild(infoTitle);
-    if (requiredLabels.length) {
-      const reqText = document.createElement('p');
-      reqText.className = 'font-inter text-xs text-gray-600';
-      reqText.textContent = `Verplicht: ${humanList(requiredLabels)}.`;
-      infoWrap.appendChild(reqText);
-    }
     info.appendChild(infoWrap);
-    const count = document.createElement('p');
-    count.className = 'font-inter text-xs text-gray-600';
-    count.textContent = `${selection.size}/${availableKeys.length} attributen geselecteerd`;
-    info.appendChild(count);
     details.innerHTML = '';
     const missingRequired = Array.from(plan.required).filter((key) => !availableKeys.includes(key));
     const expired = Boolean(pendingShare._expired);

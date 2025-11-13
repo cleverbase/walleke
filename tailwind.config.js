@@ -11,7 +11,7 @@ module.exports = {
       },
       colors: {
         brandBg: "#FAF5EB",
-        textDark: "#222",
+        textDark: "#111",
         cardBg: "#F7EFDD",
         brandBlue: "#163563",
         brandBlueHover: "#003d8c",
