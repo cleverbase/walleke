@@ -37,6 +37,7 @@ let settings = loadSettings();
 const pendingMeta = new Map();
 let uiSchema = {};
 let pendingShare = null; // { id, meta, candidates: Card[], selectedIndex: number }
+let shareStatusUnsub = null; // unsubscribe for expired status listener
 
 async function loadJson(url) {
   try {
@@ -497,6 +498,12 @@ function renderShareView() {
   try { btn.style.display = ''; } catch {}
   if (cancel) { cancel.textContent = 'Annuleren'; cancel.style.display = ''; }
   btn.onclick = async () => {
+    if (pendingShare && pendingShare._expired) {
+      // Prevent sharing after expiration
+      err.textContent = 'Het verzoek is verlopen. Vraag een nieuwe QR-code aan.';
+      btn.disabled = true;
+      return;
+    }
     btn.disabled = true;
     const ok = await confirmWithPin('12345');
     if (!ok) { btn.disabled = false; return; }
@@ -510,6 +517,23 @@ function renderShareView() {
     try { sessionStorage.setItem('lastAction', 'shared'); } catch {}
     try { window.location.hash = '#/done'; } catch {}
   };
+
+  // Listen for expiration from the portal/backend and update UI when it happens
+  (async () => {
+    try {
+      const f = await flow();
+      if (typeof shareStatusUnsub === 'function') {
+        try { shareStatusUnsub(); } catch {}
+      }
+      shareStatusUnsub = f.onExpired(pendingShare.id, () => {
+        if (!pendingShare || pendingShare._expired) return;
+        pendingShare._expired = true;
+        try { btn.disabled = true; btn.style.display = 'none'; } catch {}
+        if (err) err.textContent = 'Het verzoek is verlopen. Vraag een nieuwe QR-code aan.';
+        if (cancel) { cancel.textContent = 'Terug'; cancel.style.display = ''; }
+      });
+    } catch {}
+  })();
 }
 
 function showView(name) {
@@ -527,6 +551,10 @@ async function onRouteChange() {
   const route = currentRoute();
   console.log('Route changed to:', route);
   const scanView = document.querySelector('[data-view="scan"]');
+  if (route !== 'share' && typeof shareStatusUnsub === 'function') {
+    try { shareStatusUnsub(); } catch {}
+    shareStatusUnsub = null;
+  }
   if (route !== 'scan') {
     console.log('Stopping scanner for non-scan route...');
     const scanner = scanView?.querySelector('[data-qrflow="scanner"]');

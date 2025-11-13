@@ -25,7 +25,7 @@
       <div class="flex flex-col items-center justify-start py-4">
         <h2 class="font-headland text-xl font-medium">Scan de QR-code</h2>
         <div class="mt-6 rounded-xl overflow-hidden relative" style="width: min(480px, 92vw); aspect-ratio: 1 / 1; background:#000;">
-          <div id="reader" class="absolute inset-0" data-qrflow="scanner" data-autostart="true" data-require-pin="true" data-next-url="#/done" data-switch-button="#switchCamera" data-manual-input="#manualCode" data-manual-button="#manualSubmit" data-manual-submit-on-enter="true"></div>
+          <div id="reader" class="absolute inset-0" data-qrflow="scanner" data-autostart="true" data-require-pin="true" data-pin-value="123456" data-next-url="#/done" data-switch-button="#switchCamera" data-manual-input="#manualCode" data-manual-button="#manualSubmit" data-manual-submit-on-enter="true"></div>
           <div id="scanOverlay" class="absolute inset-0 bg-black/30 flex items-center justify-center hidden" style="pointer-events:none;">
             <div class="flex items-center gap-2 text-white font-inter text-sm">
               <span class="inline-block w-5 h-5 border-2 border-white/60 border-t-white rounded-full animate-spin"></span>
@@ -101,6 +101,7 @@
     <div class="max-w-sm w-full bg-cardBg rounded-2xl p-8 flex flex-col items-center gap-6">
       <h3 class="font-headland text-2xl font-medium">Bevestig met PIN</h3>
       <div id="pinDots" class="flex gap-3 mt-2" aria-label="PIN-status">
+        <span class="w-3 h-3 rounded-full border border-textDark/40 inline-block"></span>
         <span class="w-3 h-3 rounded-full border border-textDark/40 inline-block"></span>
         <span class="w-3 h-3 rounded-full border border-textDark/40 inline-block"></span>
         <span class="w-3 h-3 rounded-full border border-textDark/40 inline-block"></span>

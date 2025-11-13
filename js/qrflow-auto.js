@@ -163,6 +163,7 @@ async function startScanner(el) {
 
         let value = "";
         const PIN = (el.dataset.pinValue || "12345").toString();
+        const PIN_LENGTH = PIN.length;
         const renderDots = () => {
           dots.forEach((d, i) => {
             d.className = i < value.length ? "w-3 h-3 rounded-full bg-textDark inline-block" : "w-3 h-3 rounded-full border border-textDark/40 inline-block";
@@ -189,10 +190,10 @@ async function startScanner(el) {
           const digit = t.dataset.digit;
           if (!digit) return;
           clearErr();
-          if (value.length < 5) {
+          if (value.length < PIN_LENGTH) {
             value += digit;
             renderDots();
-            if (value.length === 5) {
+            if (value.length === PIN_LENGTH) {
               if (value === PIN) {
                 try {
                   f.markCompleted(lastId);

@@ -108,6 +108,7 @@
       }
       if (!shared) {
         container.innerHTML = '<div class="font-inter text-base text-gray-800">Er is geen toestemming ontvangen. Het verzoek is verlopen.</div>';
+        try { await f.markExpired(id); } catch {}
       } else if ((shared && shared.outcome === 'not_found') || shared.error === 'not_found') {
         const req = (shared.requestedType || '').toUpperCase();
         const human = titleFor(req) || req || 'gegevens';

@@ -91,6 +91,13 @@ export class QrFlow {
     await set(ref(this.db, `sessions/${qrId}/status/completedAt`), serverTimestamp());
   }
 
+  async markExpired(qrId) {
+    await this._maybeCleanup();
+    const { ref, set, serverTimestamp } = this.api;
+    try { await set(ref(this.db, `sessions/${qrId}/expired`), true); } catch {}
+    try { await set(ref(this.db, `sessions/${qrId}/status/expiredAt`), serverTimestamp()); } catch {}
+  }
+
   async deleteSession(qrId) {
     await this._maybeCleanup();
     const { ref, remove } = this.api;
@@ -232,6 +239,23 @@ export class QrFlow {
     return val;
   }
 
+  async getStatus(qrId) {
+    await this._maybeCleanup();
+    const { ref, get } = this.api;
+    const snap = await get(ref(this.db, `sessions/${qrId}/status`));
+    const val = snap && typeof snap.val === 'function' ? snap.val() : (snap ? snap.val : null);
+    return val || {};
+  }
+
+  async getExpiresAt(qrId) {
+    await this._maybeCleanup();
+    const { ref, get } = this.api;
+    const snap = await get(ref(this.db, `sessions/${qrId}/expiresAt`));
+    const v = snap && typeof snap.val === 'function' ? snap.val() : (snap ? snap.val : null);
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
   async sessionExists(qrId) {
     const { ref, get } = this.api;
     const snap = await get(ref(this.db, `sessions/${qrId}`));
@@ -255,6 +279,15 @@ export class QrFlow {
     const unsubNew = onValue(rNew, (snap) => { if (snap.val()) callback(true); });
     const rOld = ref(this.db, `sessions/${qrId}/completed`);
     const unsubOld = onValue(rOld, (snap) => { if (snap.val() === true) callback(true); });
+    return () => { try { unsubNew(); } catch {} try { unsubOld(); } catch {} };
+  }
+
+  onExpired(qrId, callback) {
+    const { ref, onValue } = this.api;
+    const rNew = ref(this.db, `sessions/${qrId}/status/expiredAt`);
+    const unsubNew = onValue(rNew, (snap) => { if (snap && snap.val()) callback(true); });
+    const rOld = ref(this.db, `sessions/${qrId}/expired`);
+    const unsubOld = onValue(rOld, (snap) => { if (snap && snap.val() === true) callback(true); });
     return () => { try { unsubNew(); } catch {} try { unsubOld(); } catch {} };
   }
 
