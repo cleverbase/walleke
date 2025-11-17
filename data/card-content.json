@@ -62,7 +62,7 @@
   },
   "NBA_REMCO": {
     "visible": true,
-    "type": "NBA_REGISTRATION",
+    "type": "NBA_REGISTRATIE",
     "issuer": "NBA",
     "issuedAt": "2025-11-11T20:21:00+01:00",
     "expiresAt": "2026-11-11T20:21:00+01:00",
