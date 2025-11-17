@@ -1092,7 +1092,7 @@ function renderCards() {
       };
       pid?.addEventListener('click', (e) => { e.currentTarget.disabled = true; markAdvanced(); seedFromFile('../data/cards-seed.json', 'pid'); });
       pidInc?.addEventListener('click', (e) => { e.currentTarget.disabled = true; markAdvanced(); seedFromFile('../data/cards-seed.json', 'pid_inkomen'); });
-      pidNvm?.addEventListener('click', (e) => { e.currentTarget.disabled = true; markAdvanced(); seedFromFile('../data/cards-seed.json', 'pid_nvm'); });
+      pidNvm?.addEventListener('click', (e) => { e.currentTarget.disabled = true; markAdvanced(); seedFromFile('../data/cards-seed.json', 'pid_memberships'); });
       no?.addEventListener('click', () => {
         settings.hideSeedPrompt = true;
         settings.advancedSeedOptions = true;

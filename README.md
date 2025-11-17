@@ -54,7 +54,7 @@
     - Contains named sets used by the wallet:
       - `pid` – PID only (default first-run seed).
       - `pid_inkomen` – PID + latest income statements.
-      - `pid_nvm` – PID + NVM membership.
+      - `pid_memberships` – PID + NVM membership + KNB registration + NBA registration.
     - Entries can reference `card-content.json` via `{ "typeRef": "...", "contentRef": "..."] }` or provide inline payloads.
 
   - `data/use-scenarios.json`
@@ -107,7 +107,7 @@
 **Extending The Demo**
 - Add a new type: extend `data/card-types.json` (title/order/labels/format).
 - Provide example content: add an entry to `data/card-content.json` (set `visible: true` to list it on the portal).
-- Seed the wallet: extend `data/cards-seed.json` (`pid`, `pid_inkomen`, `pid_nvm` or add your own set names).
+- Seed the wallet: extend `data/cards-seed.json` (`pid`, `pid_inkomen`, `pid_memberships` or add your own set names).
 - Create a new share scenario: add to `data/use-scenarios.json` with `request.typeRef` and result configuration.
 
 **Landing Page (`index.html`)**

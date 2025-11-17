@@ -57,7 +57,7 @@
     "payload": {
       "given_name": "Remco",
       "family_name": "van Wijk",
-      "membership_number": "KNB-514112"
+      "registration_number": "KNB-514112"
     }
   },
   "NBA_REMCO": {
@@ -69,7 +69,7 @@
     "payload": {
       "given_name": "Remco",
       "family_name": "van Wijk",
-      "membership_number": "NBA-978261"
+      "registration_number": "NBA-978261"
     }
   }
 }
