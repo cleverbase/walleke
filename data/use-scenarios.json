@@ -56,7 +56,6 @@
     "resultTitle": "De volgende gegevens zijn gedeeld:",
     "resultNameTemplate": "NVM-lidmaatschap"
   },
-  ,
   "SHARE_KNB_REGISTRATIE": {
     "visible": false,
     "title": "KNB-registratie delen",
@@ -75,7 +74,6 @@
     "resultTitle": "De volgende gegevens zijn gedeeld:",
     "resultNameTemplate": "KNB-registratie"
   },
-  ,
   "SHARE_NBA_REGISTRATIE": {
     "visible": false,
     "title": "NBA-registratie delen",
