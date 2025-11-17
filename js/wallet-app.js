@@ -1073,7 +1073,7 @@ function renderCards() {
           </div>
           ${showAdvancedSeeds ? `<div class="flex flex-wrap items-center justify-center gap-3 w-full">
             <button id="seedPidIncomeBtn" class="px-4 py-2 rounded-md text-sm font-inter bg-brandBlue text-white hover:bg-brandBlueHover">PID + INKOMEN</button>
-            <button id="seedPidNvmBtn" class="px-4 py-2 rounded-md text-sm font-inter bg-brandBlue text-white hover:bg-brandBlueHover">PID + NVM LIDMAATSCHAP</button>
+            <button id="seedPidNvmBtn" class="px-4 py-2 rounded-md text-sm font-inter bg-brandBlue text-white hover:bg-brandBlueHover">PID + LIDMAATSCHAPPEN</button>
           </div>` : ''}
         </div>
         <p class="font-inter text-xs text-gray-600 mt-3">Je kunt ook altijd een QR scannen.</p>`;

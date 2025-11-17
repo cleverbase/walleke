@@ -94,7 +94,7 @@
   - Cards live in `localStorage` and are rendered using the same UI schema.
   - Seeding logic:
     - On a fresh device only two buttons are shown: “Ja, vul met PID” and “Nee”.
-    - After seeding once (or after triple-click reset) additional options appear for `PID + INKOMEN` and `PID + NVM`.
+    - After seeding once (or after triple-click reset) additional options appear for `PID + INKOMEN` and `PID + MEMBERSHIPS`.
     - Triple-click the “Wallet” title to clear the wallet, reset the prompt, and scroll to the seed card.
   - The seed prompt reads `data/cards-seed.json`/`data/card-content.json` for payloads.
   - Share flow returns `{ outcome: 'ok'|'not_found', type, issuer, payload }` to the portal.
