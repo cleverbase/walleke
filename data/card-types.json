@@ -49,5 +49,33 @@
       "membership_number": "Lidmaatschapsnummer"
     },
     "format": {}
+  },
+  "KNB_REGISTRATIE": {
+    "title": "KNB Registratie",
+    "order": [
+      "given_name",
+      "family_name",
+      "registration_number"
+    ],
+    "labels": {
+      "given_name": "Voornaam",
+      "family_name": "Achternaam",
+      "membership_number": "Registratienummer"
+    },
+    "format": {}
+  },
+  "NBA_REGISTRATIE": {
+    "title": "NBM Registratie",
+    "order": [
+      "given_name",
+      "family_name",
+      "registration_number"
+    ],
+    "labels": {
+      "given_name": "Voornaam",
+      "family_name": "Achternaam",
+      "registration_number": "Registratienummer"
+    },
+    "format": {}
   }
 }
