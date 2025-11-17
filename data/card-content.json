@@ -47,5 +47,29 @@
       "family_name": "van Wijk",
       "membership_number": "NVM-123456"
     }
+  },
+  "KNB_REMCO": {
+    "visible": true,
+    "type": "KNB_REGISTRATIE",
+    "issuer": "KNB",
+    "issuedAt": "2025-11-11T20:21:00+01:00",
+    "expiresAt": "2026-11-11T20:21:00+01:00",
+    "payload": {
+      "given_name": "Remco",
+      "family_name": "van Wijk",
+      "membership_number": "KNB-514112"
+    }
+  },
+  "NBA_REMCO": {
+    "visible": true,
+    "type": "NBA_REGISTRATIE",
+    "issuer": "NBA",
+    "issuedAt": "2025-11-11T20:21:00+01:00",
+    "expiresAt": "2026-11-11T20:21:00+01:00",
+    "payload": {
+      "given_name": "Remco",
+      "family_name": "van Wijk",
+      "membership_number": "NBA-978261"
+    }
   }
 }

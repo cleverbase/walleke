@@ -56,6 +56,44 @@
     "resultTitle": "De volgende gegevens zijn gedeeld:",
     "resultNameTemplate": "NVM-lidmaatschap"
   },
+  ,
+  "SHARE_KNB_REGISTRATIE": {
+    "visible": false,
+    "title": "KNB-registratie delen",
+    "subtitle": "Scan de QR-code",
+    "request": {
+      "typeRef": "KNB_REGISTRATIE",
+      "attributes": {
+        "required": [
+          "given_name",
+          "family_name",
+          "membership_number"
+        ],
+        "optional": []
+      }
+    },
+    "resultTitle": "De volgende gegevens zijn gedeeld:",
+    "resultNameTemplate": "KNB-registratie"
+  },
+  ,
+  "SHARE_NBA_REGISTRATIE": {
+    "visible": false,
+    "title": "NBA-registratie delen",
+    "subtitle": "Scan de QR-code",
+    "request": {
+      "typeRef": "NBA_REGISTRATIE",
+      "attributes": {
+        "required": [
+          "given_name",
+          "family_name",
+          "membership_number"
+        ],
+        "optional": []
+      }
+    },
+    "resultTitle": "De volgende gegevens zijn gedeeld:",
+    "resultNameTemplate": "NBA-registratie"
+  },
   "LOGIN_KADASTER": {
     "visible": true,
     "title": "Inloggen bij Kadaster",

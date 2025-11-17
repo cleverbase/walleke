@@ -34,12 +34,58 @@ function saveSettings(s) { try { localStorage.setItem(settingsKey, JSON.stringif
 
 let state = loadState();
 let settings = loadSettings();
+const inboxStorageKey = 'walletInboxSessions';
+function loadInboxSessions() {
+  try {
+    const raw = localStorage.getItem(inboxStorageKey);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((item) => {
+        const id = item && item.id != null ? String(item.id).trim() : '';
+        if (!id) return null;
+        return {
+          id,
+          intent: (item.intent || '').toString(),
+          type: (item.type || '').toString(),
+          source: (item.source || 'deeplink').toString(),
+          title: (item.title || '').toString(),
+          scenarioId: (item.scenarioId || '').toString(),
+          issuer: (item.issuer || '').toString(),
+          addedAt: Number(item.addedAt) || Date.now(),
+          updatedAt: Number(item.updatedAt) || Date.now(),
+          completedAt: Number(item.completedAt) || null,
+          expiredAt: Number(item.expiredAt) || null,
+          unread: item.unread === true || item.unread === undefined,
+          statusInfo: item.statusInfo || null,
+        };
+      })
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+function saveInboxSessions(list) {
+  try {
+    localStorage.setItem(inboxStorageKey, JSON.stringify(Array.isArray(list) ? list : []));
+  } catch {}
+}
+let inboxSessions = loadInboxSessions();
+let inboxNoticeTimer = null;
+const inboxFetchInFlight = new Map();
+let inboxPollTimer = null;
 const pendingMeta = new Map();
 let uiSchema = {};
 let scenarioConfigs = {};
 const scenarioAttrByKey = new Map();
 let pendingShare = null; // { id, meta, candidates: Card[], selectedIndex: number }
 let shareStatusUnsub = null; // unsubscribe for expired status listener
+let inboxDrawerOpen = false;
+let inboxDrawerTimer = null;
+let inboxDrawerKeyHandler = null;
+let bodyOverflowBeforeDrawer = '';
+const finalStatusCodes = new Set(['added', 'shared', 'not_found', 'expired']);
 
 async function loadJson(url) {
   try {
@@ -70,6 +116,87 @@ function addCardFromSession(id, metaOverride) {
   saveState(state);
   renderCards();
 }
+async function ensureSessionMeta(id, { preferRequest = true, retries = 10, delay = 150, client = null } = {}) {
+  const sessionId = (id == null ? '' : String(id)).trim();
+  if (!sessionId) return null;
+  const f = client || await flow();
+  const fetchOnce = async () => {
+    if (preferRequest) {
+      try {
+        const req = await f.getRequest(sessionId);
+        if (req) return req;
+      } catch {}
+      try {
+        const offer = await f.getOffer(sessionId);
+        if (offer) return offer;
+      } catch {}
+    } else {
+      try {
+        const offer = await f.getOffer(sessionId);
+        if (offer) return offer;
+      } catch {}
+      try {
+        const req = await f.getRequest(sessionId);
+        if (req) return req;
+      } catch {}
+    }
+    return pendingMeta.get(sessionId) || null;
+  };
+  let meta = await fetchOnce();
+  let attempts = 0;
+  while (!meta && attempts < retries) {
+    attempts += 1;
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    meta = await fetchOnce();
+  }
+  if (meta) pendingMeta.set(sessionId, meta);
+  return meta;
+}
+async function launchShareFlow(id, meta, { client = null } = {}) {
+  const sessionId = (id == null ? '' : String(id)).trim();
+  if (!sessionId) return false;
+  const f = client || await flow();
+  let shareMeta = meta || pendingMeta.get(sessionId) || null;
+  if (!shareMeta) {
+    shareMeta = await ensureSessionMeta(sessionId, { preferRequest: true, client: f });
+  } else {
+    pendingMeta.set(sessionId, shareMeta);
+  }
+  if (!shareMeta) return false;
+  const normalize = (s) => canonicalType(s || '');
+  let reqType = normalize(shareMeta.type || '');
+  if (!reqType) {
+    try {
+      const rootType = await f.getType(sessionId);
+      reqType = normalize(rootType || '');
+    } catch {}
+  }
+  let candidates = state.cards.filter((card) => normalize(card.type) === reqType);
+  if (!reqType && candidates.length === 0 && state.cards.length === 1) {
+    candidates = [state.cards[0]];
+  }
+  pendingShare = { id: sessionId, meta: shareMeta, candidates, selectedIndex: 0, fieldSelections: new Map() };
+  try { window.location.hash = '#/share'; } catch {}
+  renderShareView();
+  return true;
+}
+async function addCardFromOfferSession(id, meta, { client = null } = {}) {
+  const sessionId = (id == null ? '' : String(id)).trim();
+  if (!sessionId) return false;
+  const f = client || await flow();
+  let offerMeta = meta || pendingMeta.get(sessionId) || null;
+  if (!offerMeta) {
+    offerMeta = await ensureSessionMeta(sessionId, { preferRequest: false, client: f, retries: 12 });
+  }
+  if (!offerMeta) return false;
+  pendingMeta.set(sessionId, offerMeta);
+  const type = canonicalType(offerMeta.type || (Object.keys(uiSchema || {})[0] || 'GENERIC'));
+  const issuer = offerMeta.issuer || 'Onbekend';
+  const payload = offerMeta.payload || {};
+  addCardFromSession(sessionId, { type, issuer, payload });
+  try { await f.markCompleted(sessionId); } catch {}
+  return true;
+}
 
 function formatDate(ts) {
   if (!ts) return '';
@@ -93,6 +220,558 @@ function formatCurrencyEUR(val) {
   try { return new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n); } catch { return `€ ${Math.round(n).toLocaleString('nl-NL')}`; }
 }
 function computeStatus(card) { const now = Date.now(); return card.expiresAt && card.expiresAt < now ? 'verlopen' : 'geldig'; }
+function formatRelativeTime(ts) {
+  const value = Number(ts);
+  if (!Number.isFinite(value) || value <= 0) return '';
+  const diff = Date.now() - value;
+  if (!Number.isFinite(diff)) return '';
+  if (diff < 45 * 1000) return 'zojuist';
+  if (diff < 90 * 1000) return '1 min geleden';
+  if (diff < 60 * 60 * 1000) return `${Math.round(diff / 60000)} min geleden`;
+  if (diff < 2 * 60 * 60 * 1000) return '1 uur geleden';
+  if (diff < 24 * 60 * 60 * 1000) return `${Math.round(diff / 3600000)} uur geleden`;
+  return formatDateTime(value);
+}
+function statusBadgeClass(code) {
+  switch (code) {
+    case 'shared':
+    case 'added':
+      return 'bg-green-100 text-green-800';
+    case 'not_found':
+      return 'bg-amber-100 text-amber-800';
+    case 'expired':
+      return 'bg-gray-200 text-gray-600';
+    case 'scanned':
+      return 'bg-indigo-100 text-indigo-800';
+    default:
+      return 'bg-blue-50 text-brandBlue';
+  }
+}
+function deriveInboxStatus({ intent, status = {}, response = null, expiresAt = null } = {}) {
+  const lowerIntent = (intent || '').toString().toLowerCase();
+  const completedAt = Number(status && status.completedAt);
+  const scannedAt = Number(status && status.scannedAt);
+  const expiredAt = Number((status && status.expiredAt) || expiresAt);
+  const outcome = response && typeof response === 'object' ? (response.outcome || '') : '';
+  const now = Date.now();
+  if (expiredAt && expiredAt <= now) {
+    return { code: 'expired', label: 'Verlopen', description: 'Verzoek verlopen; vraag een nieuwe QR-code aan.' };
+  }
+  if (outcome === 'not_found') {
+    return { code: 'not_found', label: 'Niet gedeeld', description: 'Geen gegevens gedeeld; de sessiecode werkt niet meer.' };
+  }
+  if (outcome === 'ok' || (completedAt && completedAt > 0)) {
+    return lowerIntent === 'use_card'
+      ? { code: 'shared', label: 'Gedeeld', description: 'Verzoek verwerkt; de sessiecode is nu ongeldig.' }
+      : { code: 'added', label: 'Toegevoegd', description: 'Verzoek gebruikt; de sessiecode werkt niet meer.' };
+  }
+  if (scannedAt && !completedAt) {
+    return lowerIntent === 'use_card'
+      ? { code: 'scanned', label: 'Bezig met delen' }
+      : { code: 'scanned', label: 'Bezig met toevoegen' };
+  }
+  return lowerIntent === 'use_card'
+    ? { code: 'pending-share', label: 'Verzoek wacht op jou' }
+    : { code: 'pending-offer', label: 'Data staat klaar' };
+}
+function pruneInboxSessions({ ttlMs = 24 * 60 * 60 * 1000 } = {}) {
+  const cutoff = Date.now() - Math.max(0, Number(ttlMs) || 0);
+  const before = inboxSessions.length;
+  inboxSessions = inboxSessions.filter((entry) => {
+    const lastTs = entry.completedAt || entry.updatedAt || entry.addedAt;
+    return !lastTs || lastTs >= cutoff;
+  });
+  if (inboxSessions.length !== before) {
+    saveInboxSessions(inboxSessions);
+  }
+}
+function findInboxEntry(id) {
+  const key = (id == null ? '' : String(id)).trim();
+  if (!key) return null;
+  return inboxSessions.find((entry) => entry.id === key) || null;
+}
+function sourceLabel(source) {
+  const key = (source || '').toString().toLowerCase();
+  if (!key) return '';
+  if (key === 'push') return 'via push';
+  if (key === 'deeplink') return 'via link';
+  if (key === 'manual') return 'handmatig';
+  return `via ${key}`;
+}
+function upsertInboxEntry(id, data = {}) {
+  const normalizedId = (id == null ? '' : String(id)).trim();
+  if (!normalizedId) return null;
+  let entry = findInboxEntry(normalizedId);
+  const now = Date.now();
+  if (!entry) {
+    entry = {
+      id: normalizedId,
+      intent: (data.intent || '').toString(),
+      type: (data.type || '').toString(),
+      source: (data.source || 'deeplink').toString(),
+      title: (data.title || '').toString(),
+      scenarioId: (data.scenarioId || '').toString(),
+      issuer: (data.issuer || '').toString(),
+      addedAt: now,
+      updatedAt: now,
+      completedAt: null,
+      expiredAt: null,
+      unread: data.unread !== false,
+      statusInfo: data.statusInfo || null,
+    };
+    inboxSessions.unshift(entry);
+    if (inboxSessions.length > 12) {
+      inboxSessions = inboxSessions.slice(0, 12);
+    }
+  } else {
+    const currentIndex = inboxSessions.findIndex((item) => item.id === entry.id);
+    if (data.intent != null) entry.intent = data.intent;
+    if (data.type != null) entry.type = data.type;
+    if (data.source != null) entry.source = data.source;
+    if (data.title != null) entry.title = data.title;
+    if (data.scenarioId != null) entry.scenarioId = data.scenarioId;
+    if (data.issuer != null) entry.issuer = data.issuer;
+    if (data.statusInfo) entry.statusInfo = data.statusInfo;
+    if (data.completedAt != null) entry.completedAt = data.completedAt;
+    if (data.expiredAt != null) entry.expiredAt = data.expiredAt;
+    if (data.unread === false) entry.unread = false;
+    if (data.unread === true) entry.unread = true;
+    entry.updatedAt = now;
+    if (currentIndex > 0) {
+      inboxSessions.splice(currentIndex, 1);
+      inboxSessions.unshift(entry);
+    }
+  }
+  saveInboxSessions(inboxSessions);
+  renderInbox();
+  startInboxPolling();
+  return entry;
+}
+function removeInboxEntry(id) {
+  const normalizedId = (id == null ? '' : String(id)).trim();
+  if (!normalizedId) return;
+  const before = inboxSessions.length;
+  inboxSessions = inboxSessions.filter((entry) => entry.id !== normalizedId);
+  if (before !== inboxSessions.length) {
+    saveInboxSessions(inboxSessions);
+    renderInbox();
+    startInboxPolling();
+  }
+}
+function markInboxEntryRead(id) {
+  const entry = findInboxEntry(id);
+  if (!entry) return;
+  if (!entry.unread) return;
+  entry.unread = false;
+  entry.updatedAt = Date.now();
+  saveInboxSessions(inboxSessions);
+  renderInbox();
+}
+function renderInbox() {
+  if (typeof document === 'undefined') return;
+  const list = document.getElementById('inboxList');
+  const badge = document.getElementById('inboxBadge');
+  const subtitle = document.getElementById('inboxSubtitle');
+  const toggleBadge = document.getElementById('inboxToggleBadge');
+  if (!list) return;
+  const count = inboxSessions.length;
+  if (toggleBadge) {
+    if (count > 0) {
+      toggleBadge.textContent = count;
+      toggleBadge.classList.remove('hidden');
+    } else {
+      toggleBadge.classList.add('hidden');
+    }
+  }
+  if (!count) {
+    list.innerHTML = '<div class="font-inter text-sm text-gray-600">Geen openstaande verzoeken.</div>';
+    if (badge) badge.classList.add('hidden');
+    if (subtitle) subtitle.textContent = 'Openstaande sessies verschijnen hier.';
+    return;
+  }
+  if (subtitle) subtitle.textContent = 'Open verzoeken en recente statusupdates';
+  list.innerHTML = '';
+  if (badge) {
+    badge.classList.remove('hidden');
+    badge.textContent = count === 1 ? '1 verzoek' : `${count} verzoeken`;
+  }
+  const frag = document.createDocumentFragment();
+  inboxSessions.forEach((entry) => {
+    const card = document.createElement('article');
+    card.className = 'bg-white border border-gray-200 rounded-2xl p-4 flex flex-col gap-3 shadow-sm';
+    card.dataset.sessionId = entry.id;
+    const header = document.createElement('div');
+    header.className = 'flex items-start justify-between gap-3';
+    const headCopy = document.createElement('div');
+    headCopy.className = 'flex flex-col gap-1';
+    const title = document.createElement('div');
+    title.className = 'font-headland text-base';
+    title.textContent = entry.title || labelForType(entry.type) || 'Verzoek';
+    const meta = document.createElement('div');
+    meta.className = 'font-inter text-xs text-gray-600';
+    const parts = [];
+    if (entry.intent) parts.push(entry.intent === 'use_card' ? 'Delen' : 'Toevoegen');
+    if (entry.type) parts.push(labelForType(entry.type));
+    const src = sourceLabel(entry.source);
+    if (src) parts.push(src);
+    if (entry.updatedAt) parts.push(formatRelativeTime(entry.updatedAt));
+    meta.textContent = parts.filter(Boolean).join(' • ');
+    headCopy.appendChild(title);
+    headCopy.appendChild(meta);
+    header.appendChild(headCopy);
+    const badgeEl = document.createElement('span');
+    const statusInfo = entry.statusInfo || deriveInboxStatus({ intent: entry.intent });
+    badgeEl.className = `font-inter text-xs px-2 py-0.5 rounded-full ${statusBadgeClass(statusInfo.code)}`;
+    badgeEl.textContent = statusInfo.label || 'Status onbekend';
+    header.appendChild(badgeEl);
+    card.appendChild(header);
+    if (statusInfo.description) {
+      const desc = document.createElement('p');
+      desc.className = 'font-inter text-xs text-gray-600';
+      desc.textContent = statusInfo.description;
+      card.appendChild(desc);
+    }
+    if (entry.unread) {
+      const unread = document.createElement('span');
+      unread.className = 'font-inter text-xs text-brandBlue';
+      unread.textContent = 'Nieuw verzoek';
+      card.appendChild(unread);
+    }
+    const actions = document.createElement('div');
+    actions.className = 'flex flex-wrap gap-2';
+    const openBtn = document.createElement('button');
+    openBtn.type = 'button';
+    const isFinal = statusInfo && finalStatusCodes.has(statusInfo.code);
+    openBtn.className = isFinal
+      ? 'px-4 py-2 rounded-md text-sm font-inter bg-white border border-gray-300 text-brandBlue hover:bg-gray-50 transition'
+      : 'px-4 py-2 rounded-md text-sm font-inter bg-brandBlue text-white hover:bg-brandBlueHover transition';
+    openBtn.textContent = isFinal ? 'Details' : (entry.intent === 'use_card' ? 'Bekijk verzoek' : 'Openen');
+    if (isFinal) openBtn.setAttribute('data-finalized', 'true'); else openBtn.removeAttribute('data-finalized');
+    openBtn.setAttribute('data-inbox-action', 'open');
+    openBtn.setAttribute('data-session-id', entry.id);
+    actions.appendChild(openBtn);
+    const dismissBtn = document.createElement('button');
+    dismissBtn.type = 'button';
+    dismissBtn.className = 'px-4 py-2 rounded-md text-sm font-inter bg-white border border-gray-300 text-textDark hover:bg-gray-50 transition';
+    dismissBtn.textContent = 'Verwijder';
+    dismissBtn.setAttribute('data-inbox-action', 'dismiss');
+    dismissBtn.setAttribute('data-session-id', entry.id);
+    actions.appendChild(dismissBtn);
+    const refreshBtn = document.createElement('button');
+    refreshBtn.type = 'button';
+    refreshBtn.className = 'px-3 py-2 rounded-md text-xs font-inter text-brandBlue underline';
+    refreshBtn.textContent = 'Vernieuwen';
+    refreshBtn.setAttribute('data-inbox-action', 'refresh');
+    refreshBtn.setAttribute('data-session-id', entry.id);
+    actions.appendChild(refreshBtn);
+    card.appendChild(actions);
+    frag.appendChild(card);
+  });
+  list.appendChild(frag);
+}
+let toastTimer = null;
+function showFloatingToast(message) {
+  let toast = document.getElementById('walletToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'walletToast';
+    toast.className = 'wallet-toast px-4 py-2 rounded-full text-white font-inter text-sm shadow-lg z-50 hidden';
+    Object.assign(toast.style, {
+      position: 'fixed',
+      left: '50%',
+      bottom: '1.5rem',
+      transform: 'translateX(-50%)',
+      backgroundColor: 'var(--color-brandBlue, #163563)',
+      zIndex: 9999,
+      transition: 'opacity 0.25s ease',
+    });
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.classList.remove('hidden');
+  toast.style.opacity = '1';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.style.opacity = '0';
+    toastTimer = setTimeout(() => { toast.classList.add('hidden'); }, 300);
+  }, 3000);
+}
+function showInboxNotice(message) {
+  if (typeof document === 'undefined') return;
+  const el = document.getElementById('inboxNotice');
+  if (el) {
+    el.textContent = message;
+    if (inboxDrawerOpen) {
+      el.classList.remove('hidden');
+      if (inboxNoticeTimer) clearTimeout(inboxNoticeTimer);
+      inboxNoticeTimer = setTimeout(() => { el.classList.add('hidden'); }, 4000);
+    } else {
+      el.classList.add('hidden');
+    }
+  }
+  if (!inboxDrawerOpen) {
+    showFloatingToast(message);
+  }
+}
+async function refreshInboxEntry(id, { silent = false } = {}) {
+  const normalizedId = (id == null ? '' : String(id)).trim();
+  if (!normalizedId) return null;
+  if (inboxFetchInFlight.has(normalizedId)) {
+    return inboxFetchInFlight.get(normalizedId);
+  }
+  const promise = (async () => {
+    const entry = findInboxEntry(normalizedId);
+    if (!entry) return null;
+    const f = await flow();
+    const [intentRaw, request, offer, shared, status, expiresAt] = await Promise.all([
+      f.getIntent(normalizedId).catch(() => ''),
+      f.getRequest(normalizedId).catch(() => null),
+      f.getOffer(normalizedId).catch(() => null),
+      f.getShared(normalizedId).catch(() => null),
+      f.getStatus(normalizedId).catch(() => ({})),
+      f.getExpiresAt(normalizedId).catch(() => null),
+    ]);
+    const metaSource = request || offer || shared || entry.meta || null;
+    let intent = (intentRaw || '').toString().toLowerCase();
+    if (!intent && metaSource && metaSource.intent) {
+      intent = String(metaSource.intent).toLowerCase();
+    }
+    entry.intent = intent || entry.intent || '';
+    if (metaSource && metaSource.type) entry.type = metaSource.type;
+    if (metaSource && metaSource.issuer) entry.issuer = metaSource.issuer;
+    if (request && request.scenario) entry.scenarioId = String(request.scenario).toUpperCase();
+    const scenarioCfg = entry.scenarioId ? scenarioConfigs[entry.scenarioId] : null;
+    if (scenarioCfg && scenarioCfg.title) {
+      entry.title = scenarioCfg.title;
+    } else if (!entry.title && entry.type) {
+      entry.title = labelForType(entry.type);
+    }
+    entry.updatedAt = Date.now();
+    const statusInfo = deriveInboxStatus({
+      intent: entry.intent,
+      status: status || {},
+      response: shared,
+      expiresAt,
+    });
+    entry.statusInfo = statusInfo;
+    if (status && status.completedAt) entry.completedAt = Number(status.completedAt) || entry.completedAt;
+    if (status && status.expiredAt) entry.expiredAt = Number(status.expiredAt) || entry.expiredAt;
+    if (expiresAt && !entry.expiredAt) entry.expiredAt = Number(expiresAt) || entry.expiredAt;
+    saveInboxSessions(inboxSessions);
+    if (!silent) renderInbox();
+    return entry;
+  })().finally(() => inboxFetchInFlight.delete(normalizedId));
+  inboxFetchInFlight.set(normalizedId, promise);
+  return promise;
+}
+function startInboxPolling() {
+  if (inboxPollTimer) {
+    clearInterval(inboxPollTimer);
+    inboxPollTimer = null;
+  }
+  if (!inboxSessions.length) return;
+  inboxPollTimer = setInterval(() => {
+    inboxSessions.forEach((entry) => {
+      refreshInboxEntry(entry.id, { silent: true }).catch(() => {});
+    });
+  }, 15000);
+}
+function openInboxDrawer() {
+  if (inboxDrawerOpen) return;
+  const section = document.getElementById('inboxSection');
+  const panel = section?.querySelector('[data-inbox-panel]');
+  if (!section || !panel) return;
+  section.classList.remove('hidden');
+  requestAnimationFrame(() => {
+    panel.classList.remove('translate-x-full');
+    panel.classList.add('translate-x-0');
+  });
+  bodyOverflowBeforeDrawer = document.body.style.overflow;
+  document.body.style.overflow = 'hidden';
+  inboxDrawerOpen = true;
+  inboxDrawerKeyHandler = (e) => {
+    if (e.key === 'Escape') {
+      closeInboxDrawer();
+    }
+  };
+  window.addEventListener('keydown', inboxDrawerKeyHandler);
+}
+function closeInboxDrawer({ immediate = false } = {}) {
+  if (!inboxDrawerOpen) return;
+  const section = document.getElementById('inboxSection');
+  const panel = section?.querySelector('[data-inbox-panel]');
+  if (!section || !panel) return;
+  panel.classList.add('translate-x-full');
+  panel.classList.remove('translate-x-0');
+  const finalize = () => {
+    section.classList.add('hidden');
+    inboxDrawerOpen = false;
+    document.body.style.overflow = bodyOverflowBeforeDrawer || '';
+    if (inboxDrawerKeyHandler) {
+      window.removeEventListener('keydown', inboxDrawerKeyHandler);
+      inboxDrawerKeyHandler = null;
+    }
+  };
+  if (immediate) {
+    finalize();
+    return;
+  }
+  if (inboxDrawerTimer) clearTimeout(inboxDrawerTimer);
+  inboxDrawerTimer = setTimeout(finalize, 200);
+}
+function toggleInboxDrawer() {
+  if (inboxDrawerOpen) closeInboxDrawer();
+  else openInboxDrawer();
+}
+const INBOX_PARAM_KEYS = ['session', 'code', 'qr', 'id'];
+function extractSessionIdFromParams(params) {
+  if (!params) return '';
+  for (const key of INBOX_PARAM_KEYS) {
+    const val = params.get(key);
+    if (val) {
+      const normalized = String(val).trim();
+      if (normalized) return normalized;
+    }
+  }
+  return '';
+}
+function scrubSessionParamsFromUrl(keys = INBOX_PARAM_KEYS) {
+  if (typeof window === 'undefined' || !window.history || typeof window.history.replaceState !== 'function') return;
+  try {
+    const current = new URL(window.location.href);
+    let searchChanged = false;
+    keys.forEach((key) => {
+      if (current.searchParams.has(key)) {
+        current.searchParams.delete(key);
+        searchChanged = true;
+      }
+    });
+    ['intent', 'source'].forEach((key) => {
+      if (current.searchParams.has(key)) {
+        current.searchParams.delete(key);
+        searchChanged = true;
+      }
+    });
+    let hashChanged = false;
+    let nextHash = current.hash || '';
+    if (nextHash.includes('?')) {
+      const [hashPath, hashQuery] = nextHash.split('?');
+      const params = new URLSearchParams(hashQuery);
+      keys.forEach((key) => {
+        if (params.has(key)) {
+          params.delete(key);
+          hashChanged = true;
+        }
+      });
+      ['intent', 'source'].forEach((key) => {
+        if (params.has(key)) {
+          params.delete(key);
+          hashChanged = true;
+        }
+      });
+      nextHash = params.toString() ? `${hashPath}?${params.toString()}` : hashPath;
+    }
+    if (searchChanged || hashChanged) {
+      const searchPart = current.searchParams.toString();
+      const nextPath = `${current.pathname}${searchPart ? `?${searchPart}` : ''}${nextHash}`;
+      window.history.replaceState({}, document.title, nextPath);
+    }
+  } catch {}
+}
+function captureSessionFromUrl() {
+  if (typeof window === 'undefined') return null;
+  let sessionId = '';
+  let intent = '';
+  let source = '';
+  try {
+    const current = new URL(window.location.href);
+    sessionId = extractSessionIdFromParams(current.searchParams);
+    intent = current.searchParams.get('intent') || '';
+    source = current.searchParams.get('source') || '';
+  } catch {}
+  if (!sessionId) {
+    const hash = window.location.hash || '';
+    if (hash.includes('?')) {
+      const params = new URLSearchParams(hash.slice(hash.indexOf('?') + 1));
+      sessionId = extractSessionIdFromParams(params);
+      if (!intent) intent = params.get('intent') || '';
+      if (!source) source = params.get('source') || '';
+    }
+  }
+  if (!sessionId) return null;
+  const existed = Boolean(findInboxEntry(sessionId));
+  upsertInboxEntry(sessionId, {
+    intent: intent ? intent.toLowerCase() : '',
+    source: (source || 'deeplink').toLowerCase(),
+    unread: true,
+  });
+  refreshInboxEntry(sessionId).catch(() => {});
+  scrubSessionParamsFromUrl();
+  if (!existed) {
+    showInboxNotice('Nieuw verzoek ontvangen');
+  }
+  return sessionId;
+}
+async function openInboxSession(sessionId) {
+  closeInboxDrawer();
+  await refreshInboxEntry(sessionId, { silent: true }).catch(() => {});
+  const entry = findInboxEntry(sessionId);
+  if (!entry) return;
+  markInboxEntryRead(sessionId);
+  const statusInfo = entry.statusInfo || deriveInboxStatus({ intent: entry.intent });
+  if (statusInfo && finalStatusCodes.has(statusInfo.code)) {
+    await showRequestInfoOverlay({
+      title: `${titleForEntry(entry)} verwerkt`,
+      body: statusInfo.description || 'Dit verzoek is al gebruikt. De sessiecode is niet meer geldig.',
+      confirmLabel: 'Sluiten',
+      allowCancel: false,
+    });
+    return;
+  }
+  const friendlyTitle = titleForEntry(entry);
+  try {
+    const f = await flow();
+    try { await f.markScanned(sessionId); } catch {}
+    const intent = (entry.intent || '').toLowerCase();
+    if (intent === 'use_card') {
+      const success = await launchShareFlow(sessionId, pendingMeta.get(sessionId), { client: f });
+      if (!success) {
+        showInboxNotice('Geen gegevens gevonden voor dit verzoek');
+      } else {
+        showInboxNotice('Verzoek geopend');
+      }
+    } else {
+      const proceed = await showRequestInfoOverlay({
+        title: `Voeg ${friendlyTitle} toe`,
+        body: 'Je staat op het punt om gegevens vanuit het portaal toe te voegen aan je wallet. Ga alleen verder als je deze bron vertrouwt.',
+        confirmLabel: 'PIN invoeren',
+        cancelLabel: 'Annuleren',
+        allowCancel: true,
+      });
+      if (!proceed) {
+        showInboxNotice('Actie geannuleerd');
+        return;
+      }
+      const pinValue = getConfiguredPinValue();
+      const ok = await confirmWithPin(pinValue);
+      if (!ok) {
+        showInboxNotice('Actie geannuleerd');
+        return;
+      }
+      const success = await addCardFromOfferSession(sessionId, pendingMeta.get(sessionId), { client: f });
+      if (success) {
+        try { sessionStorage.setItem('lastAction', 'added'); } catch {}
+        try { window.location.hash = '#/done'; } catch {}
+        showInboxNotice('Gegevens verwerkt; sessiecode is nu ongeldig.');
+      } else {
+        showInboxNotice('Kon gegevens niet openen');
+      }
+    }
+    refreshInboxEntry(sessionId, { silent: true }).catch(() => {});
+  } catch {
+    showInboxNotice('Verzoek openen mislukt');
+  }
+}
 
 function renderDetailsFromSchema(type, payload) {
   const schema = uiSchema && uiSchema[type];
@@ -615,6 +1294,45 @@ async function confirmWithPin(pinValue = '123456') {
     }
   });
 }
+function showRequestInfoOverlay({ title, body, confirmLabel = 'OK', cancelLabel = 'Annuleren', allowCancel = true } = {}) {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('requestInfoOverlay');
+    const titleEl = document.getElementById('requestInfoTitle');
+    const bodyEl = document.getElementById('requestInfoBody');
+    const confirmBtn = document.getElementById('requestInfoConfirm');
+    const cancelBtn = document.getElementById('requestInfoCancel');
+    if (!overlay || !titleEl || !bodyEl || !confirmBtn || !cancelBtn) {
+      resolve(true);
+      return;
+    }
+    titleEl.textContent = title || 'Verzoek openen';
+    bodyEl.textContent = body || '';
+    confirmBtn.textContent = confirmLabel || 'OK';
+    cancelBtn.textContent = cancelLabel || 'Annuleren';
+    if (allowCancel === false) {
+      cancelBtn.classList.add('hidden');
+    } else {
+      cancelBtn.classList.remove('hidden');
+    }
+    overlay.classList.remove('hidden');
+    const close = (result) => {
+      overlay.classList.add('hidden');
+      confirmBtn.removeEventListener('click', onConfirm);
+      cancelBtn.removeEventListener('click', onCancel);
+      resolve(result);
+    };
+    const onConfirm = (e) => {
+      e?.preventDefault?.();
+      close(true);
+    };
+    const onCancel = (e) => {
+      e?.preventDefault?.();
+      close(false);
+    };
+    confirmBtn.addEventListener('click', onConfirm);
+    cancelBtn.addEventListener('click', onCancel);
+  });
+}
 
 function renderShareView() {
   const info = document.getElementById('shareInfo');
@@ -645,8 +1363,10 @@ function renderShareView() {
           await f.setShared(pendingShare.id, { error: 'not_found', requestedType: reqType, version: 1 });
           await f.setResponse(pendingShare.id, { outcome: 'not_found', requestedType: reqType, version: 1 });
           await f.markCompleted(pendingShare.id);
+          refreshInboxEntry(pendingShare.id, { silent: true }).catch(() => {});
           try { sessionStorage.setItem('lastAction', 'shared_none'); } catch {}
           try { window.location.hash = '#/done'; } catch {}
+          showInboxNotice('Geen gegevens gedeeld; sessiecode is vervallen.');
         } catch {}
       })();
     }
@@ -823,9 +1543,11 @@ function renderShareView() {
         selectedFields: selectedKeys,
       });
       await f.markCompleted(pendingShare.id);
+      refreshInboxEntry(pendingShare.id, { silent: true }).catch(() => {});
     } catch {}
     try { sessionStorage.setItem('lastAction', 'shared'); } catch {}
     try { window.location.hash = '#/done'; } catch {}
+    showInboxNotice('Gegevens gedeeld; sessiecode is nu ongeldig.');
   };
 
   // Listen for expiration from the portal/backend and update UI when it happens
@@ -989,44 +1711,16 @@ function attachScanHandlers() {
         // Fast path: check root intent
         let intent = '';
         try { intent = String(await f.getIntent(id) || '').toLowerCase(); } catch {}
-        // Fallback to meta detection if needed
-        let meta = null;
-        const ensureMeta = async () => {
-          let m = await f.getRequest(id);
-          if (!m) m = await f.getOffer(id);
-          return m;
-        };
-        // Always attempt to have meta ready for both flows (especially add-card)
-        meta = await ensureMeta();
-        if (!meta) {
-          for (let i = 0; i < 10 && !meta; i++) {
-            await new Promise(r => setTimeout(r, 200));
-            try { meta = await ensureMeta(); } catch {}
-          }
-        }
-        if (meta) pendingMeta.set(id, meta);
+        let meta = await ensureSessionMeta(id, { preferRequest: true, client: f });
         if (!intent) {
-          intent = (meta && (meta.intent || (meta.payload && meta.payload.intent))) ? String(meta.intent || meta.payload.intent).toLowerCase() : '';
+          intent = (meta && (meta.intent || (meta.payload && meta.payload.intent)))
+            ? String(meta.intent || meta.payload.intent).toLowerCase()
+            : '';
         }
         if (intent === 'use_card') {
-          let reqType = '';
-          try {
-            const m = pendingMeta.get(id) || (await f.getRequest(id)) || null;
-            reqType = (m && m.type) ? String(m.type).toUpperCase().trim() : '';
-            if (!reqType) {
-              const rootType = await f.getType(id);
-              if (rootType) reqType = String(rootType).toUpperCase().trim();
-            }
-            if (!meta) meta = m;
-          } catch {}
-          const normalize = (s) => (s == null ? '' : String(s).toUpperCase().trim());
-          let candidates = state.cards.filter(c => normalize(c.type) === reqType);
-          if (reqType === '' && candidates.length === 0 && state.cards.length === 1) {
-            candidates = [state.cards[0]];
-          }
-          pendingShare = { id, meta, candidates, selectedIndex: 0, fieldSelections: new Map() };
-          try { window.location.hash = '#/share'; } catch {}
-          renderShareView();
+          markInboxEntryRead(id);
+          await launchShareFlow(id, meta, { client: f });
+          refreshInboxEntry(id, { silent: true }).catch(() => {});
         }
       } catch {}
     });
@@ -1055,39 +1749,28 @@ function attachScanHandlers() {
         if (intentReq === 'use_card') return;
       } catch {}
 
-      // Otherwise treat as add-card flow. Prefer the latest offer from DB.
-      // Be robust: retry briefly to avoid race conditions on first scan.
-      let m = null;
-      const tryFetchMeta = async () => {
-        let off = null, req = null;
-        try { off = await f.getOffer(id); } catch {}
-        if (!off) { try { req = await f.getRequest(id); } catch {} }
-        return off || req || pendingMeta.get(id) || null;
-      };
-      m = await tryFetchMeta();
-      if (!m) {
-        for (let i = 0; i < 12 && !m; i++) { // ~12*150ms = 1.8s max
-          await new Promise(r => setTimeout(r, 150));
-          try { m = await tryFetchMeta(); } catch {}
-        }
+      const success = await addCardFromOfferSession(id, pendingMeta.get(id), { client: f });
+      if (success) {
+        refreshInboxEntry(id, { silent: true }).catch(() => {});
+        try { sessionStorage.setItem('lastAction', 'added'); } catch {}
+        showInboxNotice('Gegevens toegevoegd; sessiecode is nu ongeldig.');
       }
-      if (!m) return; // nothing meaningful to add
-      const type = (m && m.type) ? String(m.type).toUpperCase() : (Object.keys(uiSchema || {})[0] || 'GENERIC');
-      const issuer = (m && m.issuer) || 'Onbekend';
-      const payload = (m && m.payload) || {};
-      addCardFromSession(id, { type, issuer, payload });
-      try { sessionStorage.setItem('lastAction', 'added'); } catch {}
     });
   });
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-loadJson('../data/card-types.json').then((s) => { uiSchema = s || {}; renderCards(); });
-loadJson('../data/use-scenarios.json').then((s) => { setScenarioAttributes(s || {}); }).catch(() => {});
+  loadJson('../data/card-types.json').then((s) => { uiSchema = s || {}; renderCards(); });
+  loadJson('../data/use-scenarios.json').then((s) => { setScenarioAttributes(s || {}); }).catch(() => {});
   migrateState();
   renderCards();
+  pruneInboxSessions();
+  renderInbox();
+  startInboxPolling();
+  inboxSessions.forEach((entry) => { refreshInboxEntry(entry.id, { silent: true }).catch(() => {}); });
+  captureSessionFromUrl();
   attachScanHandlers();
-  window.addEventListener('hashchange', () => { onRouteChange(); });
+  window.addEventListener('hashchange', () => { onRouteChange(); captureSessionFromUrl(); });
   onRouteChange();
 
   const title = document.getElementById('appTitle');
@@ -1116,6 +1799,11 @@ loadJson('../data/use-scenarios.json').then((s) => { setScenarioAttributes(s || 
     const hash = location.hash || '';
     if (/clear=1/i.test(hash)) { clearWallet(); location.hash = '#/wallet'; }
   } catch {}
+
+  const inboxToggle = document.getElementById('inboxToggle');
+  inboxToggle?.addEventListener('click', (e) => { e.preventDefault(); toggleInboxDrawer(); });
+  document.querySelector('[data-inbox-dismiss]')?.addEventListener('click', (e) => { e.preventDefault(); closeInboxDrawer(); });
+  document.getElementById('inboxClose')?.addEventListener('click', (e) => { e.preventDefault(); closeInboxDrawer(); });
 });
 function canonicalType(t) {
   let s = (t == null ? '' : String(t)).trim().toUpperCase();
@@ -1132,3 +1820,29 @@ function labelForType(t) {
   } catch {}
   try { return (t == null ? '' : String(t)).trim().toUpperCase() || s; } catch { return s; }
 }
+function titleForEntry(entry) {
+  if (!entry) return 'Verzoek';
+  if (entry.title) return entry.title;
+  if (entry.type) return labelForType(entry.type);
+  return 'Verzoek';
+}
+document.addEventListener('click', (event) => {
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+  const actionEl = target.closest('[data-inbox-action]');
+  if (!actionEl) return;
+  const action = actionEl.getAttribute('data-inbox-action');
+  const sessionId = actionEl.getAttribute('data-session-id');
+  if (!sessionId) return;
+  event.preventDefault();
+  if (action === 'open') {
+    openInboxSession(sessionId);
+  } else if (action === 'dismiss') {
+    removeInboxEntry(sessionId);
+    showInboxNotice('Verzoek verwijderd');
+  } else if (action === 'refresh') {
+    refreshInboxEntry(sessionId)
+      .then(() => showInboxNotice('Status bijgewerkt'))
+      .catch(() => showInboxNotice('Status ophalen mislukt'));
+  }
+});
