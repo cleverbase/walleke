@@ -8,9 +8,11 @@
       { "typeRef": "INKOMEN", "contentRef": "INKOMEN_2024_REMCO" },
       { "typeRef": "INKOMEN", "contentRef": "INKOMEN_2023_REMCO" }
     ],
-    "pid_nvm": [
+    "pid_memberships": [
       { "typeRef": "PID", "contentRef": "PID_REMCO" },
-      { "typeRef": "NVM_LIDMAATSCHAP", "contentRef": "NVM_REMCO" }
+      { "typeRef": "NVM_LIDMAATSCHAP", "contentRef": "NVM_REMCO" },
+      { "typeRef": "KNB_REGISTRATIE", "contentRef": "KNB_REMCO" },
+      { "typeRef": "NBA_REGISTRATIE", "contentRef": "NBA_REMCO" }
     ]
   }
 }
