@@ -37,7 +37,7 @@
     }
   },
   "NVM_LIDMAATSCHAP": {
-    "title": "NVM Lidmaatschap",
+    "title": "NVM - Lidmaatschap",
     "order": [
       "given_name",
       "family_name",
@@ -51,7 +51,7 @@
     "format": {}
   },
   "KNB_REGISTRATIE": {
-    "title": "KNB Registratie",
+    "title": "KNB - Notaris Registratie",
     "order": [
       "given_name",
       "family_name",
@@ -65,7 +65,7 @@
     "format": {}
   },
   "NBA_REGISTRATIE": {
-    "title": "NBM Registratie",
+    "title": "NBA - Accountant Registratie",
     "order": [
       "given_name",
       "family_name",

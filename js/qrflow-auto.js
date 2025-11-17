@@ -499,7 +499,10 @@ async function initScanner(el) {
         const dots = overlay?.querySelectorAll("#pinDots > span");
         const keys = overlay?.querySelectorAll(".pin-key");
         const backBtn = overlay?.querySelector("#pinBack");
+        const cancelBtn2 = overlay?.querySelector("#pinCancel");
         const err = overlay?.querySelector("#pinError");
+        const pad = overlay?.querySelector("#pinPadContent") || overlay?.querySelector("#pinPad");
+        const checking = overlay?.querySelector("#pinChecking");
         if (overlay && dots && keys) {
           const showOverlay = () => {
             try {
@@ -516,6 +519,30 @@ async function initScanner(el) {
 
           let value = "";
           const PIN = (el.dataset.pinValue || "12345").toString();
+          let isChecking = false;
+          const setChecking = (checkingOn) => {
+            isChecking = !!checkingOn;
+            if (pad) {
+              pad.style.opacity = isChecking ? "0.35" : "";
+              pad.style.filter = isChecking ? "blur(1px)" : "";
+            }
+            if (checking) checking.classList.toggle("hidden", !isChecking);
+          };
+          const setInteractivity = (enabled) => {
+            keys.forEach((k) => {
+              try { k.disabled = !enabled; } catch {}
+            });
+            if (backBtn) {
+              try { backBtn.disabled = !enabled; } catch {}
+            }
+            if (cancelBtn2) {
+              try {
+                cancelBtn2.style.pointerEvents = enabled ? "" : "none";
+                if (enabled) cancelBtn2.removeAttribute("aria-disabled");
+                else cancelBtn2.setAttribute("aria-disabled", "true");
+              } catch {}
+            }
+          };
           const renderDots = () => {
             dots.forEach((d, i) => {
               d.className = i < value.length ? "w-3 h-3 rounded-full bg-textDark inline-block" : "w-3 h-3 rounded-full border border-textDark/40 inline-block";
@@ -523,6 +550,8 @@ async function initScanner(el) {
           };
           renderDots();
           showOverlay();
+          setChecking(false);
+          setInteractivity(true);
           const clearErr = () => {
             if (err) {
               err.textContent = "";
@@ -536,6 +565,7 @@ async function initScanner(el) {
               err.classList.remove("invisible");
             }
           };
+          const MIN_PIN_SPINNER_MS = 2000;
           const trySubmit = async () => {
             if (value.length !== PIN.length) return;
             if (value !== PIN) {
@@ -546,7 +576,14 @@ async function initScanner(el) {
             }
             clearErr();
             try {
+              setChecking(true);
+              setInteractivity(false);
+              const start = Date.now();
               await f.markCompleted(lastId);
+              const elapsed = Date.now() - start;
+              if (elapsed < MIN_PIN_SPINNER_MS) {
+                await new Promise((resolve) => setTimeout(resolve, MIN_PIN_SPINNER_MS - elapsed));
+              }
               dispatch(el, "qrflow:completed", { id: lastId });
               try {
                 overlay.classList.add("hidden");
@@ -559,6 +596,8 @@ async function initScanner(el) {
               if (nextUrl) window.location.href = nextUrl;
             } catch (e) {
               showErr("Er ging iets mis. Probeer opnieuw.");
+              setChecking(false);
+              setInteractivity(true);
             }
           };
           keys.forEach((b) => {
@@ -566,6 +605,7 @@ async function initScanner(el) {
           });
           keys.forEach((b) => {
             b.onclick = () => {
+              if (isChecking) return;
               clearErr();
               const d = b.getAttribute("data-digit");
               if (!d) return;
@@ -577,14 +617,15 @@ async function initScanner(el) {
           });
           if (backBtn) {
             backBtn.onclick = () => {
+              if (isChecking) return;
               clearErr();
               value = value.slice(0, -1);
               renderDots();
             };
           }
-          const cancelBtn2 = overlay.querySelector("#pinCancel");
           if (cancelBtn2) {
             cancelBtn2.onclick = () => {
+              if (isChecking) return;
               try {
                 overlay.classList.add("hidden");
                 overlay.style.display = "none";
@@ -594,6 +635,7 @@ async function initScanner(el) {
           window.addEventListener(
             "keydown",
             (e) => {
+              if (isChecking) return;
               if (/^[0-9]$/.test(e.key)) {
                 if (value.length < PIN.length) {
                   value += e.key;
