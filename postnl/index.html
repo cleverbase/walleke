@@ -10,6 +10,7 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" type="image/x-icon" href="../favicon.ico">
   <link href="https://fonts.googleapis.com/css2?family=Headland+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@400" rel="stylesheet" />
   <link rel="stylesheet" href="../css/output.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@glidejs/glide/dist/css/glide.core.min.css">
   <title>PostNL Wallet Concept</title>
@@ -50,6 +51,19 @@
       background-image: url('../img/settings.svg');
     }
 
+    [data-card-indicator] {
+      display: inline-block;
+    }
+
+    .wallet-tile {
+      transition: transform 150ms ease, box-shadow 150ms ease;
+    }
+
+    .wallet-tile:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+    }
+
     .wallet-card h2 {
       font-size: 1.1rem;
     }
@@ -60,10 +74,11 @@
 <body class="bg-brandBg text-textDark min-h-screen flex flex-col">
   <div class="flex-1 pt-2 w-full mx-auto flex flex-col justify-between">
     <header class="px-6 flex items-center justify-between">
-      <div>
-        <h1 data-header-title class="font-headland text-2xl mt-1 leading-tight">Welkom Thijn</h1>
-      </div>
-      <button class="w-11 h-11 rounded-full bg-[#4b2b1c] text-white font-headland text-xl flex items-center justify-center shadow-inner shadow-black/20" aria-label="Profiel">
+      <button data-header-back type="button" class="w-9 h-9 flex items-center justify-center rounded-full text-[#4b2b1c] -ml-1 hidden" aria-label="Terug">
+        <span class="material-symbols-outlined text-2xl leading-none">arrow_back</span>
+      </button>
+      <h1 data-header-title class="flex-1 text-center font-headland text-2xl mt-1 leading-tight">Welkom Thijn</h1>
+      <button data-header-avatar class="w-11 h-11 rounded-full bg-[#4b2b1c] text-white font-headland text-xl flex items-center justify-center" aria-label="Profiel">
         T
       </button>
     </header>
@@ -131,35 +146,35 @@
 
         <div class="space-y-3">
           <div class="grid grid-cols-2 gap-3 mt-4">
-            <button class="wallet-tile rounded-2xl bg-cardBg border border-[#f1dec1] p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
+            <button class="wallet-tile rounded-2xl bg-cardBg p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
               <div>
                 <p class="font-headland text-lg">Ondertekenen</p>
               </div>
               <img src="../img/signing.svg" alt="Ondertekenen" class="w-8 h-8 self-end">
             </button>
 
-            <button class="wallet-tile rounded-2xl bg-cardBg border border-[#f1dec1] p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
+            <button class="wallet-tile rounded-2xl bg-cardBg p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
               <div>
                 <p class="font-headland text-lg">Berichtenbox</p>
               </div>
               <img src="../img/postnl.svg" alt="Berichtenbox" class="w-8 h-8 self-end">
             </button>
 
-            <button class="wallet-tile rounded-2xl bg-cardBg border border-[#f1dec1] p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
+            <button class="wallet-tile rounded-2xl bg-cardBg p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
               <div>
                 <p class="font-headland text-lg">Kaarten</p>
               </div>
               <img src="../img/cards.svg" alt="Kaarten" class="w-8 h-8 self-end">
             </button>
 
-            <button class="wallet-tile rounded-2xl bg-cardBg border border-[#f1dec1] p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
+            <button class="wallet-tile rounded-2xl bg-cardBg p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
               <div>
                 <p class="font-headland text-lg">Bestanden</p>
               </div>
               <img src="../img/files.svg" alt="Bestanden" class="w-8 h-8 self-end">
             </button>
 
-            <button class="wallet-tile rounded-2xl bg-cardBg border border-[#f1dec1] p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
+            <button class="wallet-tile rounded-2xl bg-cardBg p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
               <div>
                 <p class="font-headland text-lg">Tickets</p>
               </div>
@@ -170,53 +185,43 @@
       </section>
 
       <section data-view="messages" class="space-y-4 hidden">
-        <div class="space-y-2">
-          <p class="text-sm uppercase tracking-[0.3em] text-[#a8865f]">Inbox</p>
-          <h2 class="font-headland text-2xl">Berichtenbox</h2>
-          <p class="text-sm text-[#7a6b66]">Bekijk nieuwe meldingen van PostNL en partners.</p>
+
+        <div class="grid grid-cols-2 gap-3 mt-2">
+          <button type="button" class="rounded bg-cardBg h-32 px-4 py-3 flex flex-col items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-base">inbox</span>
+            <span class="flex items-baseline gap-1">
+              <span class="font-headland text-base">Inbox</span>
+              <span class="font-inter text-xs text-[#7a6b66]">10</span>
+            </span>
+          </button>
+
+          <button type="button" class="rounded bg-cardBg h-32 px-4 py-3 flex flex-col items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-base">send</span>
+            <span class="flex items-baseline gap-1">
+              <span class="font-headland text-base">Verzonden</span>
+              <span class="font-inter text-xs text-[#7a6b66]">6</span>
+            </span>
+          </button>
         </div>
-        <article class="bg-cardBg rounded-3xl border border-[#f1dec1] p-4 flex gap-3">
-          <div class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center">
-            <span class="font-headland text-xl text-[#f58220]">P</span>
-          </div>
-          <div class="flex-1">
-            <div class="flex items-center justify-between">
-              <h3 class="font-headland text-lg">Verwachte levering</h3>
-              <span class="text-xs text-[#a8865f]">09:24</span>
-            </div>
-            <p class="text-sm text-[#7a6b66] mt-1">Uw pakket uit Rotterdam is onderweg. Bevestig ontvangst of plan een ander moment.</p>
-            <div class="flex gap-2 mt-3">
-              <button class="px-3 py-1 text-xs rounded-full bg-white border border-[#d3b995] text-[#7f5a2e]" type="button">Bekijk</button>
-              <button class="px-3 py-1 text-xs rounded-full bg-transparent border border-transparent text-[#7f5a2e]/70 underline" type="button">Plan opnieuw</button>
-            </div>
-          </div>
-        </article>
 
-        <article class="bg-cardBg rounded-3xl border border-[#f1dec1] p-4 flex gap-3 opacity-80">
-          <div class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center">
-            <span class="font-headland text-xl text-[#f58220]">i</span>
-          </div>
-          <div class="flex-1">
-            <div class="flex items-center justify-between">
-              <h3 class="font-headland text-lg">Nieuwe kaart gedeeld</h3>
-              <span class="text-xs text-[#a8865f]">Gisteren</span>
-            </div>
-            <p class="text-sm text-[#7a6b66] mt-1">Deel uw digitale rijbewijs met PostNL om extra diensten te openen.</p>
-          </div>
-        </article>
+        <div class="mt-8">
+          <button type="button" class="w-full flex items-center gap-3 px-4 py-3 text-left">
+            <span class="material-symbols-outlined text-base">delete</span>
+            <span class="font-inter text-sm">Prullenbak</span>
+          </button>
+          <div class="ml-12 mr-4 border-t border-[#E5E4E2]"></div>
 
-        <article class="bg-cardBg rounded-3xl border border-[#f1dec1] p-4 flex gap-3 opacity-60">
-          <div class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center">
-            <span class="font-headland text-xl text-[#f58220]">!</span>
-          </div>
-          <div class="flex-1">
-            <div class="flex items-center justify-between">
-              <h3 class="font-headland text-lg">Beveiligingsmelding</h3>
-              <span class="text-xs text-[#a8865f]">1 week</span>
-            </div>
-            <p class="text-sm text-[#7a6b66] mt-1">Stel tweefactorauthenticatie in voor extra zekerheid.</p>
-          </div>
-        </article>
+          <button type="button" class="w-full flex items-center gap-3 px-4 py-3 text-left">
+            <span class="material-symbols-outlined text-base">inventory_2</span>
+            <span class="font-inter text-sm">Archief</span>
+          </button>
+          <div class="ml-12 mr-4 border-t border-[#E5E4E2]"></div>
+
+          <button type="button" class="w-full flex items-center gap-3 px-4 py-3 text-left">
+            <span class="material-symbols-outlined text-base">tune</span>
+            <span class="font-inter text-sm">Instellingen</span>
+          </button>
+        </div>
       </section>
 
       <section data-view="settings" class="hidden space-y-3">
@@ -239,7 +244,7 @@
         <li>
           <button data-target-view="messages" class="w-full flex flex-col items-center rounded-sm gap-1 py-2 font-medium" type="button">
             <span class="text-lg">✉</span>
-            Berichten
+            Post
           </button>
         </li>
         <li>
@@ -257,9 +262,11 @@
     const views = document.querySelectorAll('[data-view]');
     const navButtons = document.querySelectorAll('[data-target-view]');
     const headerTitle = document.querySelector('[data-header-title]');
+    const headerAvatar = document.querySelector('[data-header-avatar]');
+    const headerBack = document.querySelector('[data-header-back]');
     const titles = {
       wallet: 'Welkom Thijn',
-      messages: 'Berichtenbox',
+      messages: 'Post',
       settings: 'Instellingen'
     };
 
@@ -275,11 +282,31 @@
       });
 
       headerTitle.textContent = titles[target] || 'PostNL';
+
+      if (headerAvatar) {
+        if (target === 'messages') {
+          headerAvatar.innerHTML = '<img src="../img/postnl.svg" alt="PostNL" class="w-7 h-7">';
+          headerAvatar.classList.remove('bg-[#4b2b1c]', 'text-white', 'font-headland', 'text-xl');
+          headerAvatar.setAttribute('aria-label', 'PostNL');
+        } else {
+          headerAvatar.textContent = 'T';
+          headerAvatar.classList.add('bg-[#4b2b1c]', 'text-white', 'font-headland', 'text-xl');
+          headerAvatar.setAttribute('aria-label', 'Profiel');
+        }
+      }
+
+      if (headerBack) {
+        headerBack.classList.toggle('hidden', target !== 'messages');
+      }
     }
 
     navButtons.forEach((button) => {
       button.addEventListener('click', () => setActiveView(button.dataset.targetView));
     });
+
+    if (headerBack) {
+      headerBack.addEventListener('click', () => setActiveView('wallet'));
+    }
 
     setActiveView('wallet');
 
