@@ -230,35 +230,35 @@
               <div>
                 <p class="font-headland text-lg">Ondertekenen</p>
               </div>
-              <img src="../img/signing.svg" alt="Ondertekenen" class="w-8 h-8 self-end">
+              <img src="../img/signing.svg" alt="Ondertekenen" class="w-12 h-12 self-end">
             </button>
 
             <button class="wallet-tile rounded-2xl bg-cardBg p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
               <div>
                 <p class="font-headland text-lg">Berichtenbox</p>
               </div>
-              <img src="../img/postnl.svg" alt="Berichtenbox" class="w-8 h-8 self-end">
+              <img src="../img/postnl.svg" alt="Berichtenbox" class="w-12 h-12 self-end">
             </button>
 
             <button class="wallet-tile rounded-2xl bg-cardBg p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
               <div>
                 <p class="font-headland text-lg">Kaarten</p>
               </div>
-              <img src="../img/cards.svg" alt="Kaarten" class="w-8 h-8 self-end">
+              <img src="../img/cards.svg" alt="Kaarten" class="w-12 h-12 self-end">
             </button>
 
             <button class="wallet-tile rounded-2xl bg-cardBg p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
               <div>
                 <p class="font-headland text-lg">Bestanden</p>
               </div>
-              <img src="../img/files.svg" alt="Bestanden" class="w-8 h-8 self-end">
+              <img src="../img/files.svg" alt="Bestanden" class="w-12 h-12 self-end">
             </button>
 
             <button class="wallet-tile rounded-2xl bg-cardBg p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
               <div>
                 <p class="font-headland text-lg">Tickets</p>
               </div>
-              <img src="../img/tickets.svg" alt="Tickets" class="w-8 h-8 self-end">
+              <img src="../img/tickets.svg" alt="Tickets" class="w-12 h-12 self-end">
             </button>
           </div>
         </div>
@@ -465,7 +465,7 @@
             <p class="mt-8 mb-3 text-xs font-inter text-black">Provider</p>
             <div class="bg-cardBg rounded px-4 py-3 flex items-center justify-between">
               <span class="font-inter text-sm text-black">PostNL</span>
-              <img src="../img/postnl.svg" alt="PostNL" class="w-8 h-8">
+              <img src="../img/postnl.svg" alt="PostNL" class="w-12 h-12">
             </div>
           </div>
         </div>
@@ -524,6 +524,7 @@
 
     let currentView = INITIAL_VIEW;
     let currentPostPanel = INITIAL_POST_PANEL;
+    let desiredPostPanel = INITIAL_POST_PANEL;
     let glide = null;
 
     function showPostPanel(panel) {
@@ -537,6 +538,7 @@
       if (headerTitle) {
         headerTitle.textContent = panel === 'settings' ? 'Instellingen' : titles.messages;
       }
+      desiredPostPanel = panel;
     }
 
     function setActiveView(target) {
@@ -573,10 +575,24 @@
       if (target === 'wallet' && glide) {
         glide.update();
       }
+
+      // entering Post should show desired panel, leaving resets to list
+      if (target === 'messages') {
+        showPostPanel(desiredPostPanel);
+      } else {
+        desiredPostPanel = 'list';
+      }
+    }
+
+    function navigateTo(view) {
+      setActiveView(view);
+      if (!isPopState) {
+        history.pushState({ view, panel: desiredPostPanel }, '');
+      }
     }
 
     navButtons.forEach((button) => {
-      button.addEventListener('click', () => setActiveView(button.dataset.targetView));
+      button.addEventListener('click', () => navigateTo(button.dataset.targetView));
     });
 
     if (headerBack) {
@@ -584,7 +600,7 @@
         if (currentView === 'messages' && currentPostPanel === 'settings') {
           showPostPanel('list');
         } else {
-          setActiveView('wallet');
+          navigateTo('wallet');
         }
       });
     }
@@ -595,6 +611,14 @@
       }
     });
 
+    let isPopState = false;
+    window.addEventListener('popstate', (event) => {
+      const { view } = event.state || { view: INITIAL_VIEW };
+      isPopState = true;
+      setActiveView(view);
+      isPopState = false;
+    });
+    history.replaceState({ view: INITIAL_VIEW, panel: desiredPostPanel }, '');
     // swipe navigation between main views (excluding card carousel)
     if (shell) {
       const viewOrder = ['wallet', 'messages', 'settings'];
