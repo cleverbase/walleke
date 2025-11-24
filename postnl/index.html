@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="nl" class="overflow-x-hidden">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/x-icon" href="../favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Headland+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/output.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@glidejs/glide/dist/css/glide.core.min.css">
+  <title>PostNL Wallet Concept</title>
+  <style>
+    #cardCarousel .glide__track {
+      width: 200%;
+      margin-left: -50%;
+    }
+
+    nav button {
+      color: #55544C !important;
+    }
+
+    nav button span.text-lg {
+      display: none;
+    }
+
+    [data-target-view="wallet"]::before,
+    [data-target-view="messages"]::before,
+    [data-target-view="settings"]::before {
+      content: "";
+      width: 1.5rem;
+      height: 1.5rem;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      margin-bottom: 0.125rem;
+    }
+
+    [data-target-view="wallet"]::before {
+      background-image: url('../img/wallet.svg');
+    }
+
+    [data-target-view="messages"]::before {
+      background-image: url('../img/inbox.svg');
+    }
+
+    [data-target-view="settings"]::before {
+      background-image: url('../img/settings.svg');
+    }
+
+    .wallet-tile {
+      transition: transform 150ms ease, box-shadow 150ms ease;
+    }
+
+    .wallet-tile:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+    }
+
+    .wallet-card {
+      flex: 0 0 80%;
+      max-width: 420px;
+      margin-right: -40%;
+      position: relative;
+      transform-origin: center center;
+      transition: transform 220ms ease;
+      box-shadow: none;
+    }
+
+    @media (min-width: 480px) {
+      .wallet-card {
+        flex-basis: 70%;
+        margin-right: -35%;
+      }
+    }
+
+    #cardCarousel .glide__slide .wallet-card {
+      margin-right: 0;
+      transform: scale(0.94);
+    }
+
+    #cardCarousel .glide__slide--active .wallet-card {
+      transform: scale(1);
+    }
+  </style>
+</head>
+
+<body class="bg-brandBg text-textDark min-h-screen flex flex-col">
+  <div class="flex-1 w-full max-w-lg mx-auto flex flex-col">
+    <header class="px-6 pt-10 pb-6 flex items-center justify-between">
+      <div>
+        <h1 data-header-title class="font-headland text-3xl mt-1 leading-tight">Welkom Thijn</h1>
+      </div>
+      <button class="w-11 h-11 rounded-full bg-[#4b2b1c] text-white font-headland text-xl flex items-center justify-center shadow-inner shadow-black/20" aria-label="Profiel">
+        T
+      </button>
+    </header>
+
+    <main class="flex-1 px-6 pb-16" data-shell>
+      <section data-view="wallet" class="space-y-8">
+        <div class="pt-6 pb-6">
+          <div id="cardCarousel" class="glide">
+            <div class="glide__track" data-glide-el="track">
+              <ul class="glide__slides">
+                <li class="glide__slide">
+                  <article class="wallet-card bg-white/90 rounded-3xl px-5 py-4 border border-black/5">
+                    <div class="flex items-start justify-between">
+                      <div>
+                        <p class="font-inter text-xs uppercase tracking-wide text-gray-500">Rijbewijs</p>
+                        <h2 class="font-headland text-xl mt-1 text-[#2c2c2c]">NL Identiteit</h2>
+                      </div>
+                      <div class="w-9 h-9 rounded-full bg-[#003399] flex items-center justify-center text-white font-inter text-xs">NL</div>
+                    </div>
+                    <p class="text-sm text-[#7a6b66] mt-4">Status</p>
+                    <p class="text-lg font-semibold text-[#a64232]">Verlopen</p>
+                    <div class="mt-6 text-sm tracking-[0.3em] text-[#4c4c4c]">5910••••</div>
+                  </article>
+                </li>
+
+                <li class="glide__slide">
+                  <article class="wallet-card bg-[#f9e9ce] rounded-3xl px-5 py-4 border border-black/5">
+                    <div class="flex items-start justify-between">
+                      <div>
+                        <p class="font-inter text-xs uppercase tracking-wide text-[#b18644]">Identiteit</p>
+                        <h2 class="font-headland text-xl mt-1 text-[#4d381f]">BSN kaart</h2>
+                      </div>
+                      <div class="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#4d381f] font-inter text-xs border border-[#e1cfa6]">BSN</div>
+                    </div>
+                    <p class="text-sm text-[#7a6b66] mt-4">Status</p>
+                    <p class="text-lg font-semibold text-[#1c6b3a]">Actief</p>
+                    <div class="mt-6 text-sm tracking-[0.3em] text-[#4c4c4c]">9321••••</div>
+                  </article>
+                </li>
+
+                <li class="glide__slide">
+                  <article class="wallet-card bg-[#eedfd0] rounded-3xl px-5 py-4 border border-black/5">
+                    <div class="flex items-start justify-between">
+                      <div>
+                        <p class="font-inter text-xs uppercase tracking-wide text-[#b18644]">Reizen</p>
+                        <h2 class="font-headland text-xl mt-1 text-[#4d381f]">OV Ticket</h2>
+                      </div>
+                      <div class="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#4d381f] font-inter text-xs border border-[#e1cfa6]">GVB</div>
+                    </div>
+                    <p class="text-sm text-[#7a6b66] mt-4">Geldig tot</p>
+                    <p class="text-lg font-semibold text-[#0b65c2]">21 jul 2025</p>
+                    <div class="mt-6 text-sm tracking-[0.3em] text-[#4c4c4c]">4487••••</div>
+                  </article>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <button class="wallet-tile rounded-2xl bg-cardBg border border-[#f1dec1] p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
+              <div>
+                <p class="font-headland text-lg">Ondertekenen</p>
+              </div>
+              <img src="../img/signing.svg" alt="Ondertekenen" class="w-8 h-8 self-end">
+            </button>
+
+            <button class="wallet-tile rounded-2xl bg-cardBg border border-[#f1dec1] p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
+              <div>
+                <p class="font-headland text-lg">Berichtenbox</p>
+              </div>
+              <img src="../img/postnl.svg" alt="Berichtenbox" class="w-8 h-8 self-end">
+            </button>
+
+            <button class="wallet-tile rounded-2xl bg-cardBg border border-[#f1dec1] p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
+              <div>
+                <p class="font-headland text-lg">Kaarten</p>
+              </div>
+              <img src="../img/cards.svg" alt="Kaarten" class="w-8 h-8 self-end">
+            </button>
+
+            <button class="wallet-tile rounded-2xl bg-cardBg border border-[#f1dec1] p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
+              <div>
+                <p class="font-headland text-lg">Bestanden</p>
+              </div>
+              <img src="../img/files.svg" alt="Bestanden" class="w-8 h-8 self-end">
+            </button>
+
+            <button class="wallet-tile rounded-2xl bg-cardBg border border-[#f1dec1] p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
+              <div>
+                <p class="font-headland text-lg">Tickets</p>
+              </div>
+              <img src="../img/tickets.svg" alt="Tickets" class="w-8 h-8 self-end">
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section data-view="messages" class="space-y-4 hidden">
+        <div class="space-y-2">
+          <p class="text-sm uppercase tracking-[0.3em] text-[#a8865f]">Inbox</p>
+          <h2 class="font-headland text-2xl">Berichtenbox</h2>
+          <p class="text-sm text-[#7a6b66]">Bekijk nieuwe meldingen van PostNL en partners.</p>
+        </div>
+        <article class="bg-cardBg rounded-3xl border border-[#f1dec1] p-4 flex gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center">
+            <span class="font-headland text-xl text-[#f58220]">P</span>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <h3 class="font-headland text-lg">Verwachte levering</h3>
+              <span class="text-xs text-[#a8865f]">09:24</span>
+            </div>
+            <p class="text-sm text-[#7a6b66] mt-1">Uw pakket uit Rotterdam is onderweg. Bevestig ontvangst of plan een ander moment.</p>
+            <div class="flex gap-2 mt-3">
+              <button class="px-3 py-1 text-xs rounded-full bg-white border border-[#d3b995] text-[#7f5a2e]" type="button">Bekijk</button>
+              <button class="px-3 py-1 text-xs rounded-full bg-transparent border border-transparent text-[#7f5a2e]/70 underline" type="button">Plan opnieuw</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="bg-cardBg rounded-3xl border border-[#f1dec1] p-4 flex gap-3 opacity-80">
+          <div class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center">
+            <span class="font-headland text-xl text-[#f58220]">i</span>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <h3 class="font-headland text-lg">Nieuwe kaart gedeeld</h3>
+              <span class="text-xs text-[#a8865f]">Gisteren</span>
+            </div>
+            <p class="text-sm text-[#7a6b66] mt-1">Deel uw digitale rijbewijs met PostNL om extra diensten te openen.</p>
+          </div>
+        </article>
+
+        <article class="bg-cardBg rounded-3xl border border-[#f1dec1] p-4 flex gap-3 opacity-60">
+          <div class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center">
+            <span class="font-headland text-xl text-[#f58220]">!</span>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <h3 class="font-headland text-lg">Beveiligingsmelding</h3>
+              <span class="text-xs text-[#a8865f]">1 week</span>
+            </div>
+            <p class="text-sm text-[#7a6b66] mt-1">Stel tweefactorauthenticatie in voor extra zekerheid.</p>
+          </div>
+        </article>
+      </section>
+
+      <section data-view="settings" class="hidden space-y-3">
+        <p class="text-sm uppercase tracking-[0.3em] text-[#a8865f]">Instellingen</p>
+        <h2 class="font-headland text-2xl">Binnenkort beschikbaar</h2>
+        <p class="text-sm text-[#7a6b66]">We werken aan personalisatie, beveiliging en eDelivery voorkeuren. Laat het weten als je specifieke wensen hebt.</p>
+      </section>
+    </main>
+  </div>
+
+  <nav class="w-full border-t border-black/5 bg-brandBg">
+    <div class="max-w-lg mx-auto px-6 py-4">
+      <ul class="grid grid-cols-3 gap-2 text-sm font-inter">
+        <li>
+          <button data-target-view="wallet" class="w-full flex flex-col items-center gap-1 py-2 rounded-2xl bg-[#dcbc88] text-[#4b2b1c] font-semibold shadow-inner shadow-white/40" type="button">
+            <span class="text-lg">▦</span>
+            Wallet
+          </button>
+        </li>
+        <li>
+          <button data-target-view="messages" class="w-full flex flex-col items-center gap-1 py-2 rounded-2xl text-[#4b2b1c]/70 font-medium" type="button">
+            <span class="text-lg">✉</span>
+            Berichten
+          </button>
+        </li>
+        <li>
+          <button data-target-view="settings" class="w-full flex flex-col items-center gap-1 py-2 rounded-2xl text-[#4b2b1c]/70 font-medium" type="button">
+            <span class="text-lg">⚙</span>
+            Instellingen
+          </button>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <script src="https://cdn.jsdelivr.net/npm/@glidejs/glide"></script>
+  <script>
+    const views = document.querySelectorAll('[data-view]');
+    const navButtons = document.querySelectorAll('[data-target-view]');
+    const headerTitle = document.querySelector('[data-header-title]');
+    const titles = {
+      wallet: 'Welkom Thijn',
+      messages: 'Berichtenbox',
+      settings: 'Instellingen'
+    };
+
+    function setActiveView(target) {
+      views.forEach((view) => {
+        const show = view.dataset.view === target;
+        view.classList.toggle('hidden', !show);
+      });
+
+      navButtons.forEach((btn) => {
+        const active = btn.dataset.targetView === target;
+        btn.classList.toggle('bg-[#dcbc88]', active);
+        btn.classList.toggle('text-[#4b2b1c]', active);
+        btn.classList.toggle('font-semibold', active);
+        btn.classList.toggle('shadow-inner', active);
+        if (!active) {
+          btn.classList.remove('shadow-inner', 'shadow-white/40');
+          btn.classList.add('text-[#4b2b1c]/70', 'font-medium');
+        } else {
+          btn.classList.remove('text-[#4b2b1c]/70', 'font-medium');
+          btn.classList.add('shadow-white/40');
+        }
+      });
+
+      headerTitle.textContent = titles[target] || 'PostNL';
+    }
+
+    navButtons.forEach((button) => {
+      button.addEventListener('click', () => setActiveView(button.dataset.targetView));
+    });
+
+    setActiveView('wallet');
+
+    const indicators = document.querySelectorAll('[data-card-indicator]');
+
+    function setIndicator(index) {
+      indicators.forEach((dot, idx) => {
+        dot.classList.toggle('opacity-30', idx !== index);
+        dot.classList.toggle('w-10', idx === index);
+        dot.classList.toggle('w-6', idx !== index);
+      });
+    }
+
+    if (document.getElementById('cardCarousel')) {
+      const glide = new Glide('#cardCarousel', {
+        type: 'carousel',
+        focusAt: 'center',
+        perView: 3,
+        gap: -172,
+        swipeThreshold: 30,
+        dragThreshold: 60
+      });
+
+      glide.on(['mount.after', 'run.after'], () => {
+        const total = 3;
+        const idx = ((glide.index % total) + total) % total;
+        setIndicator(idx);
+      });
+
+      glide.mount();
+      setIndicator(0);
+    }
+
+  </script>
+</body>
+
+</html>
