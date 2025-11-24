@@ -119,9 +119,10 @@
       top: 0;
       left: 0;
       right: 0;
-      z-index: 12;
+      z-index: 20;
       background: inherit;
       padding-top: env(safe-area-inset-top);
+      box-shadow: 0 4px 16px -12px rgba(0, 0, 0, 0.25);
     }
 
     [data-shell] {
@@ -129,6 +130,7 @@
       overflow-y: auto;
       padding-top: calc(var(--header-height, 68px) + env(safe-area-inset-top));
       padding-bottom: calc(var(--nav-height, 56px) + env(safe-area-inset-bottom));
+      z-index: 0;
     }
 
     .wallet-card h2 {
@@ -140,25 +142,27 @@
       bottom: 0;
       left: 0;
       right: 0;
-      z-index: 10;
+      z-index: 15;
       padding-bottom: env(safe-area-inset-bottom);
       --nav-height: 56px;
+      box-shadow: 0 -4px 12px -12px rgba(0, 0, 0, 0.25);
     }
   </style>
 </head>
 
 <body class="bg-brandBg text-textDark min-h-screen flex flex-col">
-  <div class="flex-1 pt-2 w-full mx-auto flex flex-col justify-between">
-    <header class="px-6 flex items-center justify-between bg-brandBg">
-      <button data-header-back type="button" class="w-9 h-9 flex items-center justify-center rounded-full text-[#4b2b1c] -ml-1 hidden" aria-label="Terug">
-        <span class="material-symbols-outlined text-2xl leading-none">arrow_back</span>
-      </button>
-      <h1 data-header-title class="flex-1 text-center font-headland text-2xl mt-1 leading-tight">Welkom Thijn</h1>
-      <button data-header-avatar class="w-11 h-11 rounded-full bg-[#4b2b1c] text-white font-headland text-xl flex items-center justify-center" aria-label="Profiel">
-        T
-      </button>
-    </header>
 
+  <header class="px-6 flex items-center justify-between py-2 bg-brandBg">
+    <button data-header-back type="button" class="pt-2 w-9 h-9 flex items-center justify-center rounded-full text-[#4b2b1c] -ml-1 hidden" aria-label="Terug">
+      <span class="material-symbols-outlined text-2xl leading-none">arrow_back</span>
+    </button>
+    <h1 data-header-title class="flex-1 text-center font-headland text-2xl mt-1 leading-tight">Welkom Thijn</h1>
+    <button data-header-avatar class="pt-2 w-11 h-11 rounded-full bg-[#4b2b1c] text-white font-headland text-xl flex items-center justify-center" aria-label="Profiel">
+      T
+    </button>
+  </header>
+
+  <div class="flex-1 pt-2 w-full mx-auto flex flex-col justify-between">
     <main class="flex-1 px-6 pt-2" data-shell>
       <section data-view="wallet">
         <div class="pt-4 -mx-8">
@@ -375,9 +379,9 @@
             </div>
             <div class="flex flex-col text-right items-end gap-1">
               <span class="inline-flex items-center gap-0.5 text-xs font-inter text-black/60">
-              <span class="material-symbols-outlined text-[18px]! translate-y-px">done_all</span>
-              20 okt
-            </span>
+                <span class="material-symbols-outlined text-[18px]! translate-y-px">done_all</span>
+                20 okt
+              </span>
               <span class="inline-flex items-center gap-1 text-xs text-[#371F13] bg-[#EDDCBB] px-1 py-0.5 font-inter">
                 <span class="material-symbols-outlined text-[14px]!">error</span>
                 Ongetekend
