@@ -445,8 +445,8 @@
   .max-w-5xl {
     max-width: var(--container-5xl);
   }
-  .max-w-\[170px\] {
-    max-width: 170px;
+  .max-w-\[130px\] {
+    max-width: 130px;
   }
   .max-w-lg {
     max-width: var(--container-lg);
