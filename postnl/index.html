@@ -14,13 +14,12 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@glidejs/glide/dist/css/glide.core.min.css">
   <title>PostNL Wallet Concept</title>
   <style>
-    #cardCarousel .glide__track {
-      width: 200%;
-      margin-left: -50%;
-    }
-
     nav button {
       color: #55544C !important;
+    }
+
+    #cardCarousel .glide__arrows {
+      display: none;
     }
 
     nav button span.text-lg {
@@ -51,40 +50,10 @@
       background-image: url('../img/settings.svg');
     }
 
-    .wallet-tile {
-      transition: transform 150ms ease, box-shadow 150ms ease;
+    .wallet-card h2 {
+      font-size: 1.1rem;
     }
 
-    .wallet-tile:active {
-      transform: translateY(1px) scale(0.98);
-      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
-    }
-
-    .wallet-card {
-      flex: 0 0 80%;
-      max-width: 420px;
-      margin-right: -40%;
-      position: relative;
-      transform-origin: center center;
-      transition: transform 220ms ease;
-      box-shadow: none;
-    }
-
-    @media (min-width: 480px) {
-      .wallet-card {
-        flex-basis: 70%;
-        margin-right: -35%;
-      }
-    }
-
-    #cardCarousel .glide__slide .wallet-card {
-      margin-right: 0;
-      transform: scale(0.78);
-    }
-
-    #cardCarousel .glide__slide--active .wallet-card {
-      transform: scale(0.85);
-    }
   </style>
 </head>
 
@@ -99,9 +68,9 @@
       </button>
     </header>
 
-    <main class="flex-1 px-6" data-shell>
+    <main class="flex-1 px-6 pt-2" data-shell>
       <section data-view="wallet" class="space-y-8">
-        <div class="pt-2">
+        <div class="pt-4 -mx-8">
           <div id="cardCarousel" class="glide">
             <div class="glide__track" data-glide-el="track">
               <ul class="glide__slides">
@@ -114,9 +83,9 @@
                       </div>
                       <div class="w-9 h-9 rounded-full bg-[#003399] flex items-center justify-center text-white font-inter text-xs">NL</div>
                     </div>
-                    <p class="text-sm text-[#7a6b66] mt-4">Status</p>
+                    <p class="text-sm text-[#7a6b66] mt-1">Status</p>
                     <p class="text-lg font-semibold text-[#a64232]">Verlopen</p>
-                    <div class="mt-6 text-sm tracking-[0.3em] text-[#4c4c4c]">5910••••</div>
+                    <div class="mt-2 text-sm tracking-[0.3em] text-[#4c4c4c]">5910••••</div>
                   </article>
                 </li>
 
@@ -129,9 +98,9 @@
                       </div>
                       <div class="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#4d381f] font-inter text-xs border border-[#e1cfa6]">BSN</div>
                     </div>
-                    <p class="text-sm text-[#7a6b66] mt-4">Status</p>
+                    <p class="text-sm text-[#7a6b66] mt-1">Status</p>
                     <p class="text-lg font-semibold text-[#1c6b3a]">Actief</p>
-                    <div class="mt-6 text-sm tracking-[0.3em] text-[#4c4c4c]">9321••••</div>
+                    <div class="mt-2 text-sm tracking-[0.3em] text-[#4c4c4c]">9321••••</div>
                   </article>
                 </li>
 
@@ -144,14 +113,20 @@
                       </div>
                       <div class="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#4d381f] font-inter text-xs border border-[#e1cfa6]">GVB</div>
                     </div>
-                    <p class="text-sm text-[#7a6b66] mt-4">Geldig tot</p>
+                    <p class="text-sm text-[#7a6b66] mt-1">Geldig tot</p>
                     <p class="text-lg font-semibold text-[#0b65c2]">21 jul 2025</p>
-                    <div class="mt-6 text-sm tracking-[0.3em] text-[#4c4c4c]">4487••••</div>
+                    <div class="mt-2 text-sm tracking-[0.3em] text-[#4c4c4c]">4487••••</div>
                   </article>
                 </li>
               </ul>
             </div>
           </div>
+        </div>
+
+        <div class="flex justify-center gap-2 mb-0">
+          <span data-card-indicator class="h-1.5 w-10 rounded-full bg-[#4b2b1c]"></span>
+          <span data-card-indicator class="h-1.5 w-6 rounded-full bg-[#4b2b1c] opacity-30"></span>
+          <span data-card-indicator class="h-1.5 w-6 rounded-full bg-[#4b2b1c] opacity-30"></span>
         </div>
 
         <div class="space-y-3">
@@ -332,8 +307,8 @@
       const glide = new Glide('#cardCarousel', {
         type: 'carousel',
         focusAt: 'center',
-        perView: 3,
-        gap: -172,
+        perView: 1.5,
+        gap: 20,
         swipeThreshold: 30,
         dragThreshold: 60
       });
