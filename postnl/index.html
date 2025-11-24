@@ -137,7 +137,7 @@
                     <div class="flex items-start justify-between">
                       <div>
                         <p class="font-inter text-xs uppercase tracking-wide text-gray-500">Rijbewijs</p>
-                        <h2 class="font-headland text-xl mt-1 text-[#2c2c2c]">NL Identiteit</h2>
+                        <h2 class="font-headland text-xl mt-1 text-[#2c2c2c]">Nederland</h2>
                       </div>
                       <div class="w-9 h-9 rounded-full bg-[#003399] flex items-center justify-center text-white font-inter text-xs">NL</div>
                     </div>
@@ -306,12 +306,6 @@
                 E7CE5F88-8FE1-4035-8DAC-F90855E15180
               </p>
             </div>
-            <div class="flex justify-center mt-2">
-              <button type="button" class="inline-flex items-center gap-1 text-xs font-inter text-black">
-                Aanpassen
-                <span class="material-symbols-outlined text-sm">edit</span>
-              </button>
-            </div>
           </div>
 
           <div class="space-y-1">
@@ -366,6 +360,7 @@
     const headerBack = document.querySelector('[data-header-back]');
     const postPanels = document.querySelectorAll('[data-post-panel]');
     const postSettingsButton = document.querySelector('[data-post-settings]');
+    const shell = document.querySelector('[data-shell]');
     const titles = {
       wallet: 'Welkom Thijn',
       messages: 'Post',
@@ -444,6 +439,52 @@
 
     if (postSettingsButton) {
       postSettingsButton.addEventListener('click', () => showPostPanel('settings'));
+    }
+
+    // swipe navigation between main views (excluding card carousel)
+    if (shell) {
+      const viewOrder = ['wallet', 'messages', 'settings'];
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let swipeLocked = false;
+
+      shell.addEventListener('touchstart', (e) => {
+        if (!e.touches || !e.touches.length) return;
+        const t = e.touches[0];
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+        swipeLocked = !!e.target.closest('#cardCarousel');
+      }, { passive: true });
+
+      shell.addEventListener('touchend', (e) => {
+        if (swipeLocked || !e.changedTouches || !e.changedTouches.length) return;
+
+        const t = e.changedTouches[0];
+        const dx = t.clientX - touchStartX;
+        const dy = t.clientY - touchStartY;
+        const absX = Math.abs(dx);
+        const absY = Math.abs(dy);
+        const threshold = 40;
+
+        // require mostly horizontal swipe over threshold
+        if (absX < threshold || absX < absY) return;
+
+        const currentIndex = viewOrder.indexOf(currentView);
+        if (currentIndex === -1) return;
+
+        let nextIndex = currentIndex;
+        if (dx < 0 && currentIndex < viewOrder.length - 1) {
+          // swipe left -> next view
+          nextIndex++;
+        } else if (dx > 0 && currentIndex > 0) {
+          // swipe right -> previous view
+          nextIndex--;
+        }
+
+        if (nextIndex !== currentIndex) {
+          setActiveView(viewOrder[nextIndex]);
+        }
+      }, { passive: true });
     }
 
     // initial state
