@@ -16,7 +16,11 @@
   <title>PostNL Wallet Concept</title>
   <style>
     body {
-      padding-bottom: env(safe-area-inset-bottom);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      --nav-height: 56px;
+      --header-height: 68px;
     }
 
     .material-symbols-outlined {
@@ -110,12 +114,35 @@
       background-color: #e8d3aa;
     }
 
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 12;
+      background: inherit;
+      padding-top: env(safe-area-inset-top);
+    }
+
+    [data-shell] {
+      flex: 1;
+      overflow-y: auto;
+      padding-top: calc(var(--header-height, 68px) + env(safe-area-inset-top));
+      padding-bottom: calc(var(--nav-height, 56px) + env(safe-area-inset-bottom));
+    }
+
     .wallet-card h2 {
       font-size: 1.1rem;
     }
 
     .safe-bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
       padding-bottom: env(safe-area-inset-bottom);
+      --nav-height: 56px;
     }
   </style>
 </head>
