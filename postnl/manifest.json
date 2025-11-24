@@ -4,9 +4,9 @@
   "short_name": "Wallet",
   "start_url": "./index.html",
   "scope": "./",
-  "display": "fullscreen",
-  "background_color": "#f0ece3",
-  "theme_color": "#f0ece3",
+  "display": "standalone",
+  "background_color": "#FAF5EB",
+  "theme_color": "#FAF5EB",
   "icons": [
     {
       "src": "../img/icon-192.png",
