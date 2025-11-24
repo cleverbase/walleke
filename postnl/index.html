@@ -523,23 +523,6 @@
       setIndicator(0);
     }
 
-    function syncLayout() {
-      const footer = document.querySelector('nav.safe-bottom-nav');
-      const shell = document.querySelector('[data-shell]');
-      if (!footer || !shell) return;
-
-      const footerHeight = footer.offsetHeight;
-      const safeBottom = parseFloat(getComputedStyle(document.body).paddingBottom) || 0;
-      shell.style.paddingBottom = `${footerHeight + safeBottom}px`;
-    }
-
-    window.addEventListener('load', syncLayout);
-    window.addEventListener('resize', syncLayout);
-    window.addEventListener('pageshow', syncLayout);
-    window.addEventListener('orientationchange', syncLayout);
-    setTimeout(syncLayout, 0);
-    requestAnimationFrame(() => requestAnimationFrame(syncLayout));
-
   </script>
 </body>
 
