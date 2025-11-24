@@ -319,8 +319,14 @@
   .-ml-1 {
     margin-left: calc(var(--spacing) * -1);
   }
-  .ml-12 {
-    margin-left: calc(var(--spacing) * 12);
+  .ml-1 {
+    margin-left: calc(var(--spacing) * 1);
+  }
+  .ml-1\.5 {
+    margin-left: calc(var(--spacing) * 1.5);
+  }
+  .ml-16 {
+    margin-left: calc(var(--spacing) * 16);
   }
   .block {
     display: block;
@@ -378,9 +384,6 @@
   }
   .h-24 {
     height: calc(var(--spacing) * 24);
-  }
-  .h-32 {
-    height: calc(var(--spacing) * 32);
   }
   .h-full {
     height: 100%;
@@ -442,6 +445,9 @@
   .max-w-5xl {
     max-width: var(--container-5xl);
   }
+  .max-w-\[180px\] {
+    max-width: 180px;
+  }
   .max-w-lg {
     max-width: var(--container-lg);
   }
@@ -459,6 +465,10 @@
   }
   .flex-shrink-0 {
     flex-shrink: 0;
+  }
+  .translate-y-px {
+    --tw-translate-y: 1px;
+    translate: var(--tw-translate-x) var(--tw-translate-y);
   }
   .transform {
     transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);
@@ -487,14 +497,17 @@
   .flex-col {
     flex-direction: column;
   }
+  .flex-row {
+    flex-direction: row;
+  }
   .flex-wrap {
     flex-wrap: wrap;
   }
-  .items-baseline {
-    align-items: baseline;
-  }
   .items-center {
     align-items: center;
+  }
+  .items-end {
+    align-items: flex-end;
   }
   .items-start {
     align-items: flex-start;
@@ -510,6 +523,9 @@
   }
   .justify-start {
     justify-content: flex-start;
+  }
+  .gap-0\.5 {
+    gap: calc(var(--spacing) * 0.5);
   }
   .gap-1 {
     gap: calc(var(--spacing) * 1);
@@ -762,6 +778,9 @@
   .object-contain {
     object-fit: contain;
   }
+  .object-cover {
+    object-fit: cover;
+  }
   .p-4 {
     padding: calc(var(--spacing) * 4);
   }
@@ -779,6 +798,9 @@
   }
   .p-12 {
     padding: calc(var(--spacing) * 12);
+  }
+  .px-1 {
+    padding-inline: calc(var(--spacing) * 1);
   }
   .px-2 {
     padding-inline: calc(var(--spacing) * 2);
@@ -852,6 +874,9 @@
   .text-left {
     text-align: left;
   }
+  .text-right {
+    text-align: right;
+  }
   .font-headland {
     font-family: var(--font-headland);
   }
@@ -889,6 +914,12 @@
   .text-\[14px\] {
     font-size: 14px;
   }
+  .text-\[14px\]\! {
+    font-size: 14px !important;
+  }
+  .text-\[18px\]\! {
+    font-size: 18px !important;
+  }
   .leading-none {
     --tw-leading: 1;
     line-height: 1;
@@ -916,6 +947,9 @@
   .break-words {
     overflow-wrap: break-word;
   }
+  .text-ellipsis {
+    text-overflow: ellipsis;
+  }
   .hyphens-auto {
     -webkit-hyphens: auto;
     hyphens: auto;
@@ -923,6 +957,9 @@
   .hyphens-none {
     -webkit-hyphens: none;
     hyphens: none;
+  }
+  .whitespace-nowrap {
+    white-space: nowrap;
   }
   .text-\[\#0b65c2\] {
     color: #0b65c2;
@@ -944,6 +981,12 @@
   }
   .text-\[\#7a6b66\] {
     color: #7a6b66;
+  }
+  .text-\[\#126de3\] {
+    color: #126de3;
+  }
+  .text-\[\#371F13\] {
+    color: #371F13;
   }
   .text-\[\#a8865f\] {
     color: #a8865f;
@@ -1148,6 +1191,21 @@
     }
   }
 }
+@property --tw-translate-x {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-translate-y {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-translate-z {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
 @property --tw-rotate-x {
   syntax: "*";
   inherits: false;
@@ -1252,21 +1310,6 @@
   syntax: "*";
   inherits: false;
 }
-@property --tw-translate-x {
-  syntax: "*";
-  inherits: false;
-  initial-value: 0;
-}
-@property --tw-translate-y {
-  syntax: "*";
-  inherits: false;
-  initial-value: 0;
-}
-@property --tw-translate-z {
-  syntax: "*";
-  inherits: false;
-  initial-value: 0;
-}
 @property --tw-scale-x {
   syntax: "*";
   inherits: false;
@@ -1290,6 +1333,9 @@
 @layer properties {
   @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
     *, ::before, ::after, ::backdrop {
+      --tw-translate-x: 0;
+      --tw-translate-y: 0;
+      --tw-translate-z: 0;
       --tw-rotate-x: initial;
       --tw-rotate-y: initial;
       --tw-rotate-z: initial;
@@ -1315,9 +1361,6 @@
       --tw-drop-shadow-alpha: 100%;
       --tw-drop-shadow-size: initial;
       --tw-duration: initial;
-      --tw-translate-x: 0;
-      --tw-translate-y: 0;
-      --tw-translate-z: 0;
       --tw-scale-x: 1;
       --tw-scale-y: 1;
       --tw-scale-z: 1;

@@ -96,6 +96,12 @@
       line-height: 1;
     }
 
+    .verify-badge.check-small .material-symbols-outlined,
+    .material-symbols-outlined.check-small {
+      font-size: 14px;
+      line-height: 1;
+    }
+
     .post-list-button {
       transition: background-color 150ms ease;
     }
@@ -229,68 +235,155 @@
 
       <section data-view="messages" class="space-y-4 hidden">
 
-        <div data-post-panel="list" class="mt-8">
+        <div data-post-panel="list">
           <button type="button" class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
-            <span class="material-symbols-outlined text-base">inbox</span>
-            <span class="font-inter text-sm">Inbox</span>
+            <span class="ml-1.5 material-symbols-outlined text-base">inbox</span>
+            <span class="ml-1 font-inter text-sm">Inbox</span>
           </button>
-          <div class="ml-12 mr-4 border-t border-[#E5E4E2]"></div>
+
+          <div class="ml-16 mr-4 border-t border-[#E5E4E2]"></div>
 
           <button type="button" class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
             <img src="../img/belastingdienst.png" alt="Belastingdienst" class="w-9 h-9 rounded-sm object-cover">
             <div class="flex-1 space-y-0.5">
-              <p class="font-inter text-sm font-semibold flex items-center gap-1">
+              <p class="font-inter text-sm flex items-center gap-1">
                 Belastingdienst
-                <span class="material-symbols-outlined text-[14px] text-[#126de3]">check_circle</span>
+                <span class="material-symbols-outlined check-small text-[#126de3]">check_circle</span>
               </p>
-              <p class="font-inter text-xs text-[#4b2b1c]/70">Aangifte herinnering</p>
+              <p class="font-inter text-xs text-black/60">Aangifte herinnering</p>
             </div>
-            <span class="font-inter text-xs text-[#4b2b1c]/70">22 nov</span>
+            <span class="font-inter text-xs text-black/60">22 nov</span>
           </button>
-          <div class="ml-12 mr-4 border-t border-[#E5E4E2]"></div>
 
-          <button type="button" data-post-settings class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
-            <span class="material-symbols-outlined text-base">tune</span>
-            <span class="font-inter text-sm">Instellingen</span>
+          <div class="ml-16 mr-4 border-t border-[#E5E4E2]"></div>
+
+          <button type="button" class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
+            <img src="../img/willeke.png" alt="Willeke" class="w-9 h-9 rounded-sm object-cover">
+            <div class="flex-1 space-y-0.5">
+              <p class="font-inter text-sm flex items-center gap-1">
+                Willeke de Bruijn
+                <span class="material-symbols-outlined check-small text-[#126de3]">check_circle</span>
+              </p>
+              <p class="font-inter text-xs text-black/60">Message</p>
+            </div>
+            <div class="flex flex-col text-right items-end gap-1">
+              <span class="font-inter text-xs text-black/60">20 nov</span>
+              <span class="inline-flex items-center gap-1 text-xs text-[#371F13] bg-[#EDDCBB] px-1 py-0.5 font-inter">
+                <span class="material-symbols-outlined text-[14px]!">error</span>
+                Aangetekend
+              </span>
+            </div>
           </button>
+
+          <div class="ml-16 mr-4 border-t border-[#E5E4E2]"></div>
+
+          <button type="button" class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
+            <img src="../img/rechtspraak.png" alt="rechtspraak" class="w-9 h-9 rounded-sm object-cover">
+            <div class="flex-1 space-y-0.5">
+              <p class="font-inter text-sm flex items-center gap-1">
+                De Rechtspraak
+                <span class="material-symbols-outlined check-small text-[#126de3]">check_circle</span>
+              </p>
+              <p class="font-inter text-xs text-black/60">Zitting op 15 december 2025</p>
+            </div>
+            <span class="font-inter text-xs text-black/60">25 aug</span>
+          </button>
+
+          <div class="ml-16 mr-4 border-t border-[#E5E4E2]"></div>
+
+          <div class="flex flex-row font-inter font-semibold mt-3 justify-center items-center text-sm gap-2">Meer <span class="material-symbols-outlined" style="font-size:16px">add</span></div>
+
         </div>
 
-        <div data-post-panel="list" class="mt-8">
+        <div data-post-panel="list">
           <button type="button" class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
-            <span class="material-symbols-outlined text-base">send</span>
-            <span class="font-inter text-sm">Verzonden</span>
+            <span class="ml-1.5 material-symbols-outlined text-base">Send</span>
+            <span class="ml-1 font-inter text-sm">Verzonden</span>
           </button>
-          <div class="ml-12 mr-4 border-t border-[#E5E4E2]"></div>
+
+          <div class="ml-16 mr-4 border-t border-[#E5E4E2]"></div>
 
           <button type="button" class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
-            <span class="material-symbols-outlined text-base">inventory_2</span>
-            <span class="font-inter text-sm">Archief</span>
+            <img src="../img/belastingdienst.png" alt="Belastingdienst" class="w-9 h-9 rounded-sm object-cover">
+            <div class="flex-1 space-y-0.5">
+              <p class="font-inter text-sm flex items-center gap-1">
+                Belastingdienst
+                <span class="material-symbols-outlined check-small text-[#126de3]">check_circle</span>
+              </p>
+              <p class="font-inter text-xs text-black/60">Aangifte herinnering</p>
+            </div>
+            <span class="inline-flex items-center gap-0.5 text-xs font-inter text-black/60">
+              <span class="material-symbols-outlined text-[18px]! translate-y-px">check</span>
+              22 nov
+            </span>
           </button>
-          <div class="ml-12 mr-4 border-t border-[#E5E4E2]"></div>
 
-          <button type="button" data-post-settings class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
-            <span class="material-symbols-outlined text-base">tune</span>
-            <span class="font-inter text-sm">Instellingen</span>
+          <div class="ml-16 mr-4 border-t border-[#E5E4E2]"></div>
+
+          <button type="button" class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
+            <img src="../img/rdw.png" alt="rdw" class="w-9 h-9 rounded-sm object-cover">
+            <div class="flex-1 space-y-0.5">
+              <p class="font-inter text-sm flex items-center gap-1">
+                RDW
+                <span class="material-symbols-outlined check-small text-[#126de3]">check_circle</span>
+              </p>
+              <p class="font-inter text-xs text-black/60">Uw digitale rijbewijs</p>
+            </div>
+            <span class="inline-flex items-center gap-0.5 text-xs font-inter text-black/60">
+              <span class="material-symbols-outlined text-[18px]! translate-y-px">done_all</span>
+              14 nov
+            </span>
           </button>
+
+          <div class="ml-16 mr-4 border-t border-[#E5E4E2]"></div>
+
+          <button type="button" class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
+            <img src="../img/willeke.png" alt="Willeke" class="w-9 h-9 rounded-sm object-cover">
+            <div class="flex-1 space-y-0.5">
+              <p class="font-inter text-sm flex items-center gap-1">
+                Willeke de Bruijn
+                <span class="material-symbols-outlined check-small text-[#126de3]">check_circle</span>
+              </p>
+              <p class="font-inter text-xs text-black/60 overflow-hidden text-ellipsis whitespace-nowrap max-w-[180px]">Nieuwe factuur is beschikbaar 25</p>
+            </div>
+            <div class="flex flex-col text-right items-end gap-1">
+              <span class="inline-flex items-center gap-0.5 text-xs font-inter text-black/60">
+              <span class="material-symbols-outlined text-[18px]! translate-y-px">done_all</span>
+              20 okt
+            </span>
+              <span class="inline-flex items-center gap-1 text-xs text-[#371F13] bg-[#EDDCBB] px-1 py-0.5 font-inter">
+                <span class="material-symbols-outlined text-[14px]!">error</span>
+                Ongetekend
+              </span>
+            </div>
+          </button>
+
+          <div class="ml-16 mr-4 border-t border-[#E5E4E2]"></div>
+
+          <div class="flex flex-row font-inter font-semibold mt-3 justify-center items-center text-sm gap-2">Meer <span class="material-symbols-outlined" style="font-size:16px">add</span></div>
+
         </div>
 
-        <div data-post-panel="list" class="mt-8">
+        <div data-post-panel="list">
           <button type="button" class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
-            <span class="material-symbols-outlined text-base">delete</span>
-            <span class="font-inter text-sm">Prullenbak</span>
+            <span class="ml-1.5 material-symbols-outlined text-base">delete</span>
+            <span class="ml-1 font-inter text-sm">Prullenbak</span>
           </button>
-          <div class="ml-12 mr-4 border-t border-[#E5E4E2]"></div>
+
+          <div class="ml-16 mr-4 border-t border-[#E5E4E2]"></div>
 
           <button type="button" class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
-            <span class="material-symbols-outlined text-base">inventory_2</span>
-            <span class="font-inter text-sm">Archief</span>
+            <span class="ml-1.5 material-symbols-outlined text-base">archive</span>
+            <span class="ml-1 font-inter text-sm">Archief</span>
           </button>
-          <div class="ml-12 mr-4 border-t border-[#E5E4E2]"></div>
 
-          <button type="button" data-post-settings class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
-            <span class="material-symbols-outlined text-base">tune</span>
-            <span class="font-inter text-sm">Instellingen</span>
+          <div class="ml-16 mr-4 border-t border-[#E5E4E2]"></div>
+
+          <button type="button" class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
+            <span class="ml-1.5 material-symbols-outlined text-base">settings</span>
+            <span class="ml-1 font-inter text-sm">Verzonden</span>
           </button>
+
         </div>
 
         <div data-post-panel="settings" class="hidden space-y-5 mt-4">
