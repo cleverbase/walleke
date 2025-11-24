@@ -103,6 +103,10 @@
     .wallet-card h2 {
       font-size: 1.1rem;
     }
+
+    .safe-bottom-nav {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
   </style>
 </head>
 
@@ -288,7 +292,7 @@
             <div class="bg-cardBg rounded px-4 py-4 space-y-3">
               <p class="font-headland text-lg">Willeke de Bruijn</p>
               <div class="mt-1 flex items-center justify-between gap-2">
-                <p class="font-inter text-xs text-black/60">Geverifieerd door PostNL</p>
+                <p class="font-inter text-xs text-black/60">Geverifieerd door Cleverbase</p>
                 <span class="verify-badge verify-badge--blue font-headland">
                   <span class="-ml-0.5 text-[14px]">C</span>
                   <span class="-mr-2 material-symbols-outlined">check_circle</span>
@@ -324,7 +328,7 @@
     </main>
   </div>
 
-  <nav class="w-full bg-[#EDDCBB]">
+  <nav class="w-full bg-[#EDDCBB] safe-bottom-nav">
     <div class="max-w-lg mx-auto px-6 py-2">
       <ul class="grid grid-cols-3 gap-2 text-sm font-inter">
         <li>
