@@ -229,21 +229,48 @@
 
       <section data-view="messages" class="space-y-4 hidden">
 
-        <div data-post-panel="list" class="grid grid-cols-2 gap-3 mt-2">
-          <button type="button" class="rounded bg-cardBg h-32 px-4 py-3 flex flex-col items-center justify-center gap-2">
+        <div data-post-panel="list" class="mt-8">
+          <button type="button" class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
             <span class="material-symbols-outlined text-base">inbox</span>
-            <span class="flex items-baseline gap-1">
-              <span class="font-headland text-base">Inbox</span>
-              <span class="font-inter text-xs text-[#7a6b66]">10</span>
-            </span>
+            <span class="font-inter text-sm">Inbox</span>
           </button>
+          <div class="ml-12 mr-4 border-t border-[#E5E4E2]"></div>
 
-          <button type="button" class="rounded bg-cardBg h-32 px-4 py-3 flex flex-col items-center justify-center gap-2">
+          <button type="button" class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
+            <img src="../img/belastingdienst.png" alt="Belastingdienst" class="w-9 h-9 rounded-sm object-cover">
+            <div class="flex-1 space-y-0.5">
+              <p class="font-inter text-sm font-semibold flex items-center gap-1">
+                Belastingdienst
+                <span class="material-symbols-outlined text-[14px] text-[#126de3]">check_circle</span>
+              </p>
+              <p class="font-inter text-xs text-[#4b2b1c]/70">Aangifte herinnering</p>
+            </div>
+            <span class="font-inter text-xs text-[#4b2b1c]/70">22 nov</span>
+          </button>
+          <div class="ml-12 mr-4 border-t border-[#E5E4E2]"></div>
+
+          <button type="button" data-post-settings class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
+            <span class="material-symbols-outlined text-base">tune</span>
+            <span class="font-inter text-sm">Instellingen</span>
+          </button>
+        </div>
+
+        <div data-post-panel="list" class="mt-8">
+          <button type="button" class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
             <span class="material-symbols-outlined text-base">send</span>
-            <span class="flex items-baseline gap-1">
-              <span class="font-headland text-base">Verzonden</span>
-              <span class="font-inter text-xs text-[#7a6b66]">6</span>
-            </span>
+            <span class="font-inter text-sm">Verzonden</span>
+          </button>
+          <div class="ml-12 mr-4 border-t border-[#E5E4E2]"></div>
+
+          <button type="button" class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
+            <span class="material-symbols-outlined text-base">inventory_2</span>
+            <span class="font-inter text-sm">Archief</span>
+          </button>
+          <div class="ml-12 mr-4 border-t border-[#E5E4E2]"></div>
+
+          <button type="button" data-post-settings class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
+            <span class="material-symbols-outlined text-base">tune</span>
+            <span class="font-inter text-sm">Instellingen</span>
           </button>
         </div>
 
@@ -368,7 +395,7 @@
     };
 
     const INITIAL_VIEW = 'messages';        // change to 'wallet' or 'settings' if needed
-    const INITIAL_POST_PANEL = 'settings';  // 'list' or 'settings' for Post view
+    const INITIAL_POST_PANEL = 'list';  // 'list' or 'settings' for Post view
 
     let currentView = INITIAL_VIEW;
     let currentPostPanel = INITIAL_POST_PANEL;
