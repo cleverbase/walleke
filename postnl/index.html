@@ -69,9 +69,9 @@
     </header>
 
     <main class="flex-1 px-6 pt-2" data-shell>
-      <section data-view="wallet" class="space-y-8">
+      <section data-view="wallet">
         <div class="pt-4 -mx-8">
-          <div id="cardCarousel" class="glide">
+          <div id="cardCarousel" class="glide mb-4">
             <div class="glide__track" data-glide-el="track">
               <ul class="glide__slides">
                 <li class="glide__slide">
@@ -130,7 +130,7 @@
         </div>
 
         <div class="space-y-3">
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-2 gap-3 mt-4">
             <button class="wallet-tile rounded-2xl bg-cardBg border border-[#f1dec1] p-4 text-left flex flex-col justify-between gap-3 hover:translate-y-[-2px] transition" type="button">
               <div>
                 <p class="font-headland text-lg">Ondertekenen</p>
@@ -227,23 +227,23 @@
     </main>
   </div>
 
-  <nav class="w-full border-t border-black/5 bg-brandBg">
-    <div class="max-w-lg mx-auto px-6 py-4">
+  <nav class="w-full bg-[#EDDCBB]">
+    <div class="max-w-lg mx-auto px-6 py-2">
       <ul class="grid grid-cols-3 gap-2 text-sm font-inter">
         <li>
-          <button data-target-view="wallet" class="w-full flex flex-col items-center gap-1 py-2 rounded-2xl bg-[#dcbc88] text-[#4b2b1c] font-semibold shadow-inner shadow-white/40" type="button">
+          <button data-target-view="wallet" class="w-full flex flex-col items-center rounded-sm gap-1 py-2 bg-[#dcbc88] font-semibold" type="button">
             <span class="text-lg">▦</span>
             Wallet
           </button>
         </li>
         <li>
-          <button data-target-view="messages" class="w-full flex flex-col items-center gap-1 py-2 rounded-2xl text-[#4b2b1c]/70 font-medium" type="button">
+          <button data-target-view="messages" class="w-full flex flex-col items-center rounded-sm gap-1 py-2 font-medium" type="button">
             <span class="text-lg">✉</span>
             Berichten
           </button>
         </li>
         <li>
-          <button data-target-view="settings" class="w-full flex flex-col items-center gap-1 py-2 rounded-2xl text-[#4b2b1c]/70 font-medium" type="button">
+          <button data-target-view="settings" class="w-full flex flex-col items-center rounded-sm gap-1 py-2 font-medium" type="button">
             <span class="text-lg">⚙</span>
             Instellingen
           </button>
@@ -272,16 +272,6 @@
       navButtons.forEach((btn) => {
         const active = btn.dataset.targetView === target;
         btn.classList.toggle('bg-[#dcbc88]', active);
-        btn.classList.toggle('text-[#4b2b1c]', active);
-        btn.classList.toggle('font-semibold', active);
-        btn.classList.toggle('shadow-inner', active);
-        if (!active) {
-          btn.classList.remove('shadow-inner', 'shadow-white/40');
-          btn.classList.add('text-[#4b2b1c]/70', 'font-medium');
-        } else {
-          btn.classList.remove('text-[#4b2b1c]/70', 'font-medium');
-          btn.classList.add('shadow-white/40');
-        }
       });
 
       headerTitle.textContent = titles[target] || 'PostNL';
