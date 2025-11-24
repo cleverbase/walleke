@@ -15,6 +15,14 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@glidejs/glide/dist/css/glide.core.min.css">
   <title>PostNL Wallet Concept</title>
   <style>
+    .material-symbols-outlined {
+      font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'OPSZ' 20;
+    }
+
     nav button {
       color: #55544C !important;
     }
@@ -64,10 +72,37 @@
       box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
     }
 
+    .verify-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0 0.55rem;
+      height: 1.2rem;
+      border-radius: 9999px;
+      background: #f58220;
+      color: white;
+    }
+
+    .verify-badge--blue {
+      background: #126DE3;
+    }
+
+    .verify-badge .material-symbols-outlined {
+      font-size: 19px;
+      line-height: 1;
+    }
+
+    .post-list-button {
+      transition: background-color 150ms ease;
+    }
+
+    .post-list-button:active {
+      background-color: #e8d3aa;
+    }
+
     .wallet-card h2 {
       font-size: 1.1rem;
     }
-
   </style>
 </head>
 
@@ -186,7 +221,7 @@
 
       <section data-view="messages" class="space-y-4 hidden">
 
-        <div class="grid grid-cols-2 gap-3 mt-2">
+        <div data-post-panel="list" class="grid grid-cols-2 gap-3 mt-2">
           <button type="button" class="rounded bg-cardBg h-32 px-4 py-3 flex flex-col items-center justify-center gap-2">
             <span class="material-symbols-outlined text-base">inbox</span>
             <span class="flex items-baseline gap-1">
@@ -204,23 +239,80 @@
           </button>
         </div>
 
-        <div class="mt-8">
-          <button type="button" class="w-full flex items-center gap-3 px-4 py-3 text-left">
+        <div data-post-panel="list" class="mt-8">
+          <button type="button" class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
             <span class="material-symbols-outlined text-base">delete</span>
             <span class="font-inter text-sm">Prullenbak</span>
           </button>
           <div class="ml-12 mr-4 border-t border-[#E5E4E2]"></div>
 
-          <button type="button" class="w-full flex items-center gap-3 px-4 py-3 text-left">
+          <button type="button" class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
             <span class="material-symbols-outlined text-base">inventory_2</span>
             <span class="font-inter text-sm">Archief</span>
           </button>
           <div class="ml-12 mr-4 border-t border-[#E5E4E2]"></div>
 
-          <button type="button" class="w-full flex items-center gap-3 px-4 py-3 text-left">
+          <button type="button" data-post-settings class="post-list-button w-full flex items-center gap-3 px-4 py-3 text-left">
             <span class="material-symbols-outlined text-base">tune</span>
             <span class="font-inter text-sm">Instellingen</span>
           </button>
+        </div>
+
+        <div data-post-panel="settings" class="hidden space-y-5 mt-4">
+          <div class="space-y-1">
+            <p class="mb-3 text-xs font-inter text-black">Fysiek</p>
+            <div class="bg-cardBg rounded px-4 py-4 space-y-3">
+              <p class="font-headland text-lg">Willeke de Bruijn</p>
+              <div class="mt-1 flex items-center justify-between gap-2">
+                <p class="font-inter text-xs text-black/60">Geverifieerd door PostNL</p>
+                <span class="verify-badge font-headland">
+                  <span class="-ml-0.5 text-[14px]">P</span>
+                  <span class="-mr-2 material-symbols-outlined text-xs">check_circle</span>
+                </span>
+              </div>
+              <div class="font-inter text-sm text-black space-y-0.5">
+                <p>Herenstraat 231</p>
+                <p>1309KD&nbsp;&nbsp;Amsterdam</p>
+              </div>
+            </div>
+            <div class="flex justify-center mt-2">
+              <button type="button" class="inline-flex items-center gap-1 text-xs font-inter text-black">
+                Aanpassen
+                <span class="material-symbols-outlined text-sm">edit</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <p class="mb-3 text-xs font-inter text-black">Fysiek</p>
+            <div class="bg-cardBg rounded px-4 py-4 space-y-3">
+              <p class="font-headland text-lg">Willeke de Bruijn</p>
+              <div class="mt-1 flex items-center justify-between gap-2">
+                <p class="font-inter text-xs text-black/60">Geverifieerd door PostNL</p>
+                <span class="verify-badge verify-badge--blue font-headland">
+                  <span class="-ml-0.5 text-[14px]">C</span>
+                  <span class="-mr-2 material-symbols-outlined">check_circle</span>
+                </span>
+              </div>
+              <p class="font-inter text-xs text-black">
+                E7CE5F88-8FE1-4035-8DAC-F90855E15180
+              </p>
+            </div>
+            <div class="flex justify-center mt-2">
+              <button type="button" class="inline-flex items-center gap-1 text-xs font-inter text-black">
+                Aanpassen
+                <span class="material-symbols-outlined text-sm">edit</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <p class="mt-8 mb-3 text-xs font-inter text-black">Provider</p>
+            <div class="bg-cardBg rounded px-4 py-3 flex items-center justify-between">
+              <span class="font-inter text-sm text-black">PostNL</span>
+              <img src="../img/postnl.svg" alt="PostNL" class="w-8 h-8">
+            </div>
+          </div>
         </div>
       </section>
 
@@ -236,19 +328,19 @@
     <div class="max-w-lg mx-auto px-6 py-2">
       <ul class="grid grid-cols-3 gap-2 text-sm font-inter">
         <li>
-          <button data-target-view="wallet" class="w-full flex flex-col items-center rounded-sm gap-1 py-2 bg-[#dcbc88] font-semibold" type="button">
+          <button data-target-view="wallet" class="w-full flex flex-col items-center rounded-sm py-2 bg-[#dcbc88] font-semibold" type="button">
             <span class="text-lg">▦</span>
             Wallet
           </button>
         </li>
         <li>
-          <button data-target-view="messages" class="w-full flex flex-col items-center rounded-sm gap-1 py-2 font-medium" type="button">
+          <button data-target-view="messages" class="w-full flex flex-col items-center rounded-sm py-2 font-medium" type="button">
             <span class="text-lg">✉</span>
             Post
           </button>
         </li>
         <li>
-          <button data-target-view="settings" class="w-full flex flex-col items-center rounded-sm gap-1 py-2 font-medium" type="button">
+          <button data-target-view="settings" class="w-full flex flex-col items-center rounded-sm py-2 font-medium" type="button">
             <span class="text-lg">⚙</span>
             Instellingen
           </button>
@@ -264,13 +356,37 @@
     const headerTitle = document.querySelector('[data-header-title]');
     const headerAvatar = document.querySelector('[data-header-avatar]');
     const headerBack = document.querySelector('[data-header-back]');
+    const postPanels = document.querySelectorAll('[data-post-panel]');
+    const postSettingsButton = document.querySelector('[data-post-settings]');
     const titles = {
       wallet: 'Welkom Thijn',
       messages: 'Post',
       settings: 'Instellingen'
     };
 
+    const INITIAL_VIEW = 'messages';        // change to 'wallet' or 'settings' if needed
+    const INITIAL_POST_PANEL = 'settings';  // 'list' or 'settings' for Post view
+
+    let currentView = INITIAL_VIEW;
+    let currentPostPanel = INITIAL_POST_PANEL;
+    let glide = null;
+
+    function showPostPanel(panel) {
+      currentPostPanel = panel;
+      if (!postPanels.length) return;
+
+      postPanels.forEach((p) => {
+        p.classList.toggle('hidden', p.dataset.postPanel !== panel);
+      });
+
+      if (headerTitle) {
+        headerTitle.textContent = panel === 'settings' ? 'Instellingen' : titles.messages;
+      }
+    }
+
     function setActiveView(target) {
+      currentView = target;
+
       views.forEach((view) => {
         const show = view.dataset.view === target;
         view.classList.toggle('hidden', !show);
@@ -298,6 +414,10 @@
       if (headerBack) {
         headerBack.classList.toggle('hidden', target !== 'messages');
       }
+
+      if (target === 'wallet' && glide) {
+        glide.update();
+      }
     }
 
     navButtons.forEach((button) => {
@@ -305,10 +425,24 @@
     });
 
     if (headerBack) {
-      headerBack.addEventListener('click', () => setActiveView('wallet'));
+      headerBack.addEventListener('click', () => {
+        if (currentView === 'messages' && currentPostPanel === 'settings') {
+          showPostPanel('list');
+        } else {
+          setActiveView('wallet');
+        }
+      });
     }
 
-    setActiveView('wallet');
+    if (postSettingsButton) {
+      postSettingsButton.addEventListener('click', () => showPostPanel('settings'));
+    }
+
+    // initial state
+    setActiveView(INITIAL_VIEW);
+    if (INITIAL_VIEW === 'messages') {
+      showPostPanel(INITIAL_POST_PANEL);
+    }
 
     const indicators = document.querySelectorAll('[data-card-indicator]');
 
@@ -321,7 +455,7 @@
     }
 
     if (document.getElementById('cardCarousel')) {
-      const glide = new Glide('#cardCarousel', {
+      glide = new Glide('#cardCarousel', {
         type: 'carousel',
         focusAt: 'center',
         perView: 1.5,
