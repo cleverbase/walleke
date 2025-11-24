@@ -152,12 +152,12 @@
 
 <body class="bg-brandBg text-textDark min-h-screen flex flex-col">
 
-  <header class="px-6 flex items-center justify-between py-2 bg-brandBg">
+  <header class="px-6 flex items-center justify-between mt-3 py-2 bg-brandBg">
     <button data-header-back type="button" class="pt-2 w-9 h-9 flex items-center justify-center rounded-full text-[#4b2b1c] -ml-1 hidden" aria-label="Terug">
       <span class="material-symbols-outlined text-2xl leading-none">arrow_back</span>
     </button>
     <h1 data-header-title class="flex-1 text-center font-headland text-2xl mt-1 leading-tight">Welkom Thijn</h1>
-    <button data-header-avatar class="pt-2 w-11 h-11 rounded-full bg-[#4b2b1c] text-white font-headland text-xl flex items-center justify-center" aria-label="Profiel">
+    <button data-header-avatar class="w-11 h-11 rounded-full bg-[#4b2b1c] text-white font-headland text-xl flex items-center justify-center" aria-label="Profiel">
       T
     </button>
   </header>
@@ -520,7 +520,7 @@
       settings: 'Instellingen'
     };
 
-    const INITIAL_VIEW = 'messages';        // change to 'wallet' or 'settings' if needed
+    const INITIAL_VIEW = 'wallet';        // change to 'wallet' or 'settings' if needed
     const INITIAL_POST_PANEL = 'list';  // 'list' or 'settings' for Post view
 
     let currentView = INITIAL_VIEW;
